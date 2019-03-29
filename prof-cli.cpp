@@ -1,20 +1,14 @@
 #include <cstdio>
 #include "Components/ComLink/SerialLink.h"
-#include "Core/CommandReceiver/CommandReceiver.h"
+#include "Core/Communicator/PacketCommunicator.h"
+#include "Core/DataLink/Packet.h"
+
+#include <iostream>
 
 #include <chrono>
 #include <thread>
 
-#include <iostream>
-
-void waitForPacket(SerialLink& link, CommandReceiver& receiver)
-{
-	auto data = link.readData();
-	while (receiver.process(data) == false)
-	{
-		data = link.readData();
-	}
-}
+volatile uint32_t timesWritten;
 
 int main()
 {
@@ -25,26 +19,43 @@ int main()
 		return 0;
 	}
 
-	CommandReceiver receiver;
+	PacketCommunicator communicator(&link);
 
-	uint8_t msg[] = { '#', 10, 2, 0, '?', 3, 'i', 104 };
-	uint8_t msg_2[] = { '#', 20, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, (uint8_t) -28 };
-
-	int* acc_x = (int*) &msg_2[3];
-	int* acc_y = (int*) &msg_2[7];
-
+	char profRequestBuffer ='P';
+	int32_t simAccValues[2] = {0,0};
+	packet_t profilingRequest = {10, 1, &profRequestBuffer};
+	packet_t simulatedAccValues = {20, 8, (char*)simAccValues};
+	unsigned int counter = 0;
 	while (true)
 	{
-		std::cout << "\nEnter acc_x: ";
-		std::cin >> *acc_x;
-		std::cout << "\nEnter acc_y: ";
-		std::cin >> *acc_y;
-		link.writeData(msg_2, 13);
-		waitForPacket(link, receiver);
+		printf("Sending simulated sensor values ...");
+		auto response = communicator.request(simulatedAccValues);
+		if(response.id == 11)
+		{
+			printf("ok\n");
+		}
+		else
+		{
+			printf("failed\n");
+		}
+		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		printf("Sending profiling request ...");
+		fflush(stdout);
+		response = communicator.request(profilingRequest);
+		printf("ok (%u)\n", counter++);
+		if(response.id == 65)
+		{
 
-		link.writeData(msg, 8);
-		waitForPacket(link, receiver);
-		std::cin.get();
+			uint32_t* payload = (uint32_t*)response.payload;
+			uint32_t execTime = payload[0];
+			uint32_t state_x = payload[1];
+			uint32_t state_y = payload[2];
+			uint32_t state_v = payload[3];
+			uint32_t state_w = payload[4];
+
+			printf("Measured execution time: %u cycles\n", execTime);
+			printf("New state is: [%u %u %u %u]\n", state_x, state_y, state_v, state_w);
+		}
 	}
 	printf("Exiting\n");
 }
