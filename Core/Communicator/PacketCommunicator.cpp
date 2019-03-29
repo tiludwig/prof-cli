@@ -1,78 +1,85 @@
 /*
  * PacketCommunicator.cpp
  *
- *  Created on: Mar 29, 2019
- *      Author: tim
+ *  Created on: 29.03.2019
+ *      Author: Tim
  */
 
-#include "PacketCommunicator.h"
+#include <Core/Communicator/PacketCommunicator.h>
+#include <cstdio>
 
-void PacketCommunicator::putc(char value)
+PacketCommunicator::PacketCommunicator(IComLink* link)
+{
+	comDriver = link;
+}
+
+int8_t PacketCommunicator::calculateChecksum(packet_t& packet)
+{
+	int8_t checksum = packet.id;
+	checksum += packet.size.raw.lsb;
+	checksum += packet.size.raw.msb;
+
+	for (uint16_t i = 0; i < packet.size.value; i++)
+	{
+		checksum += packet.payload[i];
+	}
+
+	return -checksum;
+}
+
+void PacketCommunicator::sendStartSymbol()
+{
+	comDriver->writeData((uint8_t*) "#", 1);
+}
+
+void PacketCommunicator::send(char* buffer, uint16_t size)
+{
+	for (uint16_t i = 0; i < size; i++)
+	{
+		sendByte(buffer[i]);
+	}
+}
+
+void PacketCommunicator::sendByte(char value)
 {
 	if (value == '?' || value == '#')
 	{
-		link->writeData((const uint8_t*) "?", 1);
+		uint8_t stuff = '?';
+		comDriver->writeData(&stuff, 1);
 		value = value ^ 0x20;
 	}
 
-	link->writeData((const uint8_t*) &value, 1);
-}
-
-void PacketCommunicator::generateStartSymbol()
-{
-	link->writeData((const uint8_t*) "#", 1);
-}
-
-PacketCommunicator::PacketCommunicator()
-{
-	link = nullptr;
-
-}
-
-PacketCommunicator::~PacketCommunicator()
-{
-	// TODO Auto-generated destructor stub
+	comDriver->writeData(reinterpret_cast<uint8_t*>(&value), 1);
 }
 
 void PacketCommunicator::sendPacket(packet_t& packet)
 {
-	uint8_t lenLSB = packet.size & 0xFF;
-	uint8_t lenMSB = (packet.size >> 8) & 0xFF;
+	int8_t checksum = calculateChecksum(packet);
 
-	packet.checksum = packet.id;
-	packet.checksum += lenLSB;
-	packet.checksum += lenMSB;
-
-	generateStartSymbol();
-	putc(packet.id);
-	putc(lenLSB);
-	putc(lenMSB);
-
-	for (uint16_t i = 0; i < packet.size; i++)
-	{
-		char value = packet.payload[i];
-		packet.checksum += value;
-		putc(value);
-	}
-
-	packet.checksum = -packet.checksum;
-	putc(packet.checksum);
+	sendStartSymbol();
+	sendByte(packet.id);
+	sendByte(packet.size.raw.lsb);
+	sendByte(packet.size.raw.msb);
+	send(packet.payload, packet.size.value);
+	sendByte(checksum);
 }
 
-void PacketCommunicator::receivePacket(packet_t& packet, SerialLink& link, CommandReceiver& receiver)
+void PacketCommunicator::receivePacket(packet_t& packet)
 {
-	auto data = link.readData();
-	while (receiver.process(data) == false)
+	while (!protocol.isPacketComplete())
 	{
-		data = link.readData();
+		auto receivedByte = comDriver->readData();
+
+		protocol.processByte(receivedByte);
 	}
+
+	protocol.getPacket(packet);
 }
 
-packet_t PacketCommunicator::request(packet_t& request, SerialLink& link, CommandReceiver& receiver)
+packet_t PacketCommunicator::request(packet_t& request)
 {
 	sendPacket(request);
-
 	packet_t response;
-
+	receivePacket(response);
 	return response;
 }
