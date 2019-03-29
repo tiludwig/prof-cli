@@ -108,7 +108,10 @@ bool SerialLink::initialize()
  */
 void SerialLink::writeData(const uint8_t* data, uint32_t count)
 {
-	write(hSerialPort, data, count);
+	while(count > 0)
+	{
+		count -= write(hSerialPort, data, count);
+	}
 }
 
 /*
@@ -134,7 +137,7 @@ uint8_t SerialLink::readData()
 			printf("Error %i from readData: %s\n", errno, strerror(errno));
 			close(hSerialPort);
 			hSerialPort = -1;
-			return 255;
+			return 0;
 		}
 	}
 
