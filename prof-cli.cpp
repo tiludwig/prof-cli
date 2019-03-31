@@ -2,17 +2,93 @@
 #include "Components/ComLink/SerialLink.h"
 #include "Core/Communicator/PacketCommunicator.h"
 #include "Core/DataLink/Packet.h"
+#include "Utility/MinMax.hpp"
+#include "Utility/Variance.hpp"
+#include "Utility/FrequencyDistribution.h"
 
 #include <iostream>
 
 #include <chrono>
 #include <thread>
+#include <cmath>
+#include <signal.h>
+
+volatile bool bRunning = true;
+
+void sigfunc(int sig)
+{
+	int c;
+
+	if (sig != SIGINT)
+		return;
+	else
+	{
+		printf("\nWollen Sie das Programm beenden (j/n) : ");
+		c = getchar();
+		if (c == 'j')
+			bRunning = false;
+		else
+			return;
+	}
+}
 
 volatile uint32_t timesWritten;
 
+class UI
+{
+public:
+	void initialize()
+	{
+		printf("\e[s");
+		fflush(stdout);
+	}
+
+	void printResult(uint32_t result)
+	{
+		float execTime = result / 72.0;
+
+		printf("\e[u\e[K");
+		printf("Execution time: %u [%.2f us]\n", result, execTime);
+	}
+
+	void printState(uint32_t* state)
+	{
+		printf("\e[u\e[1B\e[K");
+		printf("State: [ ");
+
+		for (int i = 0; i < 4; i++)
+		{
+			printf("%u ", state[i]);
+		}
+		printf(" ]\n");
+	}
+
+	void printCounter(uint32_t counter)
+	{
+		printf("\e[u\e[2B\e[K");
+		printf("Packets received: %u\n", counter);
+	}
+};
+
+void printDist(FrequencyDistribution& freqStat)
+{
+	auto freqDist = freqStat.getDistribution();
+
+	for (auto& slot : *freqDist)
+		printf("%lu: %lu\n", slot.value, slot.counts);
+}
+
 int main()
 {
+	FrequencyDistribution freqStats;
+
+	signal(SIGINT, sigfunc);
+
+	UI ui;
+	ui.initialize();
+
 	SerialLink link;
+
 	if (link.initialize() == false)
 	{
 		printf("Error initializing serial port\n");
@@ -21,43 +97,39 @@ int main()
 
 	PacketCommunicator communicator(&link);
 
-	char profRequestBuffer ='P';
-	int32_t simAccValues[2] = {0,0};
+	char profRequestBuffer = 'P';
+	int32_t simAccValues[2] = { 0, 0 };
 
-	packet_t simulatedAccValues = {10, 8, (char*)simAccValues};
-	packet_t profilingRequest = {20, 1, &profRequestBuffer};
+	packet_t simulatedAccValues = { 10, 8, (char*) simAccValues };
+	packet_t profilingRequest = { 20, 1, &profRequestBuffer };
 	unsigned int counter = 0;
-	while (true)
+	MinMax minMaxStats;
+	Variance varStats;
+	auto response = communicator.request(simulatedAccValues);
+	while (bRunning)
 	{
-		printf("Sending simulated sensor values ...");
-		fflush(stdout);
-		auto response = communicator.request(simulatedAccValues);
-		if(response.id == 11)
-		{
-			printf("ok\n");
-		}
-		else
-		{
-			printf("failed\n");
-		}
-		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		printf("Sending profiling request ...");
-		fflush(stdout);
 		response = communicator.request(profilingRequest);
-		printf("ok (%u)\n", counter++);
-		if(response.id == 65)
+		counter++;
+		if (response.id == 65)
 		{
-
-			uint32_t* payload = (uint32_t*)response.payload;
+			uint32_t* payload = (uint32_t*) response.payload;
 			uint32_t execTime = payload[0];
-			uint32_t state_x = payload[1];
-			uint32_t state_y = payload[2];
-			uint32_t state_v = payload[3];
-			uint32_t state_w = payload[4];
 
-			printf("Measured execution time: %u cycles\n", execTime);
-			printf("New state is: [%u %u %u %u]\n", state_x, state_y, state_v, state_w);
+			minMaxStats.update(execTime);
+			varStats.update(execTime);
+			freqStats.update(execTime);
+
+			ui.printResult(minMaxStats.getMax());
+			printf("Mean: %f\n", varStats.getMean());
+			printf("Std.Dev.: %f\n", sqrt(varStats.getVariance()));
+			printf("Sample Count: %u\n", varStats.getSampleCount());
+
+			if (((counter + 1) % 1000) == 0)
+			{
+				printDist(freqStats);
+			}
 		}
+		//ui.printCounter(counter);
 	}
 	printf("Exiting\n");
 }
