@@ -23,12 +23,14 @@ int main()
 
 	char profRequestBuffer ='P';
 	int32_t simAccValues[2] = {0,0};
-	packet_t profilingRequest = {10, 1, &profRequestBuffer};
-	packet_t simulatedAccValues = {20, 8, (char*)simAccValues};
+
+	packet_t simulatedAccValues = {10, 8, (char*)simAccValues};
+	packet_t profilingRequest = {20, 1, &profRequestBuffer};
 	unsigned int counter = 0;
 	while (true)
 	{
 		printf("Sending simulated sensor values ...");
+		fflush(stdout);
 		auto response = communicator.request(simulatedAccValues);
 		if(response.id == 11)
 		{
