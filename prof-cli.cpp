@@ -5,117 +5,37 @@
 #include "Utility/MinMax.hpp"
 #include "Utility/Variance.hpp"
 #include "Utility/FrequencyDistribution.h"
-
+#include "UI/CommandLineInterface.h"
 #include <iostream>
 
 #include <chrono>
 #include <thread>
 #include <cmath>
 #include <signal.h>
+#include <stdlib.h>
+#include <time.h>
+#include <algorithm>
+#include <fstream>
+
+using namespace UI;
 
 volatile bool bRunning = true;
 
+volatile uint32_t wcet;
 void sigfunc(int sig)
 {
-	int c;
-
 	if (sig != SIGINT)
 		return;
 	else
 	{
-		printf("\nWollen Sie das Programm beenden (j/n) : ");
-		c = getchar();
-		if (c == 'j')
-			exit(0);
-		else
-			return;
+		fflush(stdout);
+		printf("\e[2J\e[0;0H");
+		fflush(stdout);
+		printf("Profiling done.\n");
+		printf("Measured WCET: %u cycles [%.2f us].\n", wcet, (wcet / 72.0));
+		exit(0);
 	}
 }
-
-volatile uint32_t timesWritten;
-
-class UI
-{
-public:
-	void initialize()
-	{
-		printf("\tRemaining: 0h0m0s\n");
-		printf("\tcurrent: [####################] 0%%\n");
-		printf("\ttotal:   [####################] 0%%\n");
-		printf("[Result]\n");
-		printf("\e[s");
-		fflush(stdout);
-	}
-
-	void updateRemainingTime(int hours, int minutes, int seconds)
-	{
-		printf("\e[u\e[4A\e[K");
-		fflush(stdout);
-		printf("\tRemaining: %dh%dm%ds\n", hours, minutes, seconds);
-	}
-
-	void updateCurrentBar(int current, int total)
-	{
-		printf("\e[u\e[3A\e[K");
-		fflush(stdout);
-		printf("\tcurrent: [");
-
-		float percentage = (float) current / total;
-		int barValue = 20 * percentage;
-
-		for (int i = 0; i < barValue; i++)
-			printf("#");
-
-		for (int i = 0; i < (20 - barValue); i++)
-			printf(" ");
-
-		printf("] %3.0f%%\n", (percentage * 100.0));
-	}
-
-	void updateTotalBar(int current, int total)
-	{
-		printf("\e[u\e[2A\e[K");
-		fflush(stdout);
-		printf("\ttotal:   [");
-
-		float percentage = (float) current / total;
-		int barValue = 20 * percentage;
-
-		for (int i = 0; i < barValue; i++)
-			printf("#");
-
-		for (int i = 0; i < (20 - barValue); i++)
-			printf(" ");
-
-		printf("] %3.0f%%\n", (percentage * 100.0));
-	}
-
-	void printResult(uint32_t result)
-	{
-		float execTime = result / 72.0;
-
-		printf("\e[u\e[K");
-		printf("\tExecution time: %u [%.2f us]\n", result, execTime);
-	}
-
-	void printState(uint32_t* state)
-	{
-		printf("\e[u\e[1B\e[K");
-		printf("\tState: [ ");
-
-		for (int i = 0; i < 4; i++)
-		{
-			printf("%u ", state[i]);
-		}
-		printf(" ]\n");
-	}
-
-	void printCounter(uint32_t counter)
-	{
-		printf("\e[u\e[2B\e[K");
-		printf("\tPackets received: %u\n", counter);
-	}
-};
 
 void printDist(FrequencyDistribution& freqStat)
 {
@@ -130,17 +50,12 @@ int main(int argc, char** argv)
 	int iterations = atoi(argv[1]);
 	int uiUpdateIterations = atoi(argv[2]);
 
-	printf("[Settings]\n");
-	printf("\tCore clock: 72 [MHz]\n");
-	printf("\tIterations: %d\n", iterations);
-	printf("[Run]\n");
-
 	FrequencyDistribution freqStats;
 
 	signal(SIGINT, sigfunc);
 
-	UI ui;
-	ui.initialize();
+	CommandLineInterface ui;
+	ui.initialize(iterations, uiUpdateIterations);
 
 	SerialLink link;
 
@@ -153,9 +68,9 @@ int main(int argc, char** argv)
 	PacketCommunicator communicator(&link);
 
 	char profRequestBuffer = 'P';
-	int32_t simAccValues[2] = { 0, 0 };
+	int32_t simAccValues[3] = { 1, 20, -1 };
 
-	packet_t simulatedAccValues = { 10, 8, (char*) simAccValues };
+	packet_t simulatedAccValues = { 10, 3*sizeof(int32_t), (char*) simAccValues };
 	packet_t profilingRequest = { 20, 1, &profRequestBuffer };
 	unsigned int counter = 0;
 	int uiIterations = 0;
@@ -168,6 +83,13 @@ int main(int argc, char** argv)
 
 	for (int i = 0; i < iterations; i++)
 	{
+		/* initialize random seed: */
+		srand(time(NULL));
+
+		/* generate delay number between 1 and 10: */
+		int delayTime = rand() % 5 + 1;
+		std::this_thread::sleep_for(std::chrono::milliseconds(delayTime));
+
 		start = std::chrono::steady_clock::now();
 		response = communicator.request(profilingRequest);
 
@@ -178,6 +100,7 @@ int main(int argc, char** argv)
 			uint32_t execTime = payload[0];
 
 			minMaxStats.update(execTime);
+			wcet = minMaxStats.getMax();
 			varStats.update(execTime);
 			freqStats.update(execTime);
 
@@ -188,11 +111,11 @@ int main(int argc, char** argv)
 				printf("\tMean: %f\n", varStats.getMean());
 				printf("\tStd.Dev.: %f\n", sqrt(varStats.getVariance()));
 				printf("\tSample Count: %u\n", varStats.getSampleCount());
-				printDist(freqStats);
+				//printDist(freqStats);
 			}
 			uiIterations++;
-			ui.updateCurrentBar(uiIterations, uiUpdateIterations);
-			ui.updateTotalBar(i, iterations);
+			ui.updateCurrentProgressbar(uiIterations);
+			ui.updateTotalProgressbar(i);
 		}
 
 		end = std::chrono::steady_clock::now();
@@ -201,13 +124,25 @@ int main(int argc, char** argv)
 		if ((i % 100) == 0)
 		{
 			double meanduration = timeStats.getMean();
-			int64_t estimatedSeconds = meanduration * (iterations-i) / 1000000;
-			int estimatedHours = estimatedSeconds / 3600;
-			estimatedSeconds -= (estimatedHours * 3600);
-			int estimatedMinutes = estimatedSeconds / 60;
-			estimatedSeconds -= (estimatedMinutes * 60);
-			ui.updateRemainingTime(estimatedHours, estimatedMinutes, estimatedSeconds);
+			int64_t estimatedSeconds = meanduration * (iterations - i) / 1000000;
+			ui.printRemainingTime(estimatedSeconds);
 		}
 	}
-	printf("Exiting\n");
+
+	fflush(stdout);
+	printf("\e[2J\e[0;0H");
+	fflush(stdout);
+	printf("Profiling done.\n");
+	printf("Measured WCET: %u cycles [%.2f us].\n", wcet, (wcet / 72.0));
+
+	auto dist = freqStats.getDistribution();
+
+	std::sort(dist->begin(), dist->end(), [](freqdist_entry_t a, freqdist_entry_t b){return a.value < b.value;});
+
+	std::ofstream myfile;
+	myfile.open("wcet-dist.csv");
+	for(auto& slot : *dist)
+		myfile << slot.value << "," << slot.counts << "\n";
+
+	myfile.close();
 }
