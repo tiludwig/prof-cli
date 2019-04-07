@@ -14,6 +14,8 @@
 #include <cmath>
 #include <thread>
 
+#include "Core/TestinputProvider/TestinputProvider.h"
+
 using namespace UI;
 
 volatile bool bRunning = true;
@@ -48,7 +50,10 @@ int main(int argc, char** argv)
 	int uiUpdateIterations = atoi(argv[2]);
 
 	std::string taskname(argv[3]);
+	std::string inputprovider(argv[4]);
 
+	TestinputProvider provider = TestinputProvider::loadPlugin(inputprovider.c_str());
+	provider.initialize();
 	FrequencyDistribution freqStats;
 
 	signal(SIGINT, sigfunc);
@@ -67,11 +72,10 @@ int main(int argc, char** argv)
 	PacketCommunicator communicator(&link);
 
 	char profRequestBuffer = 'P';
-	int32_t simAccValues[3] = { 1, 20, -1 };
+	//int32_t simAccValues[3] = { 1, 20, -1 };
 
-	packet_t simulatedAccValues = { 20, 3*sizeof(int32_t), (char*) simAccValues };
 	packet_t profilingRequest = { 10, 1, &profRequestBuffer };
-	packet_t profilingTarget = {30, static_cast<uint16_t>(taskname.length() + 1), const_cast<char*>(taskname.c_str())};
+	packet_t profilingTarget = { 30, static_cast<uint16_t>(taskname.length() + 1), const_cast<char*>(taskname.c_str()) };
 
 	communicator.request(profilingTarget);
 	unsigned int counter = 0;
@@ -79,12 +83,16 @@ int main(int argc, char** argv)
 	MinMax minMaxStats;
 	Variance varStats;
 	Variance timeStats;
+
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-	auto response = communicator.request(simulatedAccValues);
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
 	for (int i = 0; i < iterations; i++)
 	{
+		auto dataset = provider.getNextDataset();
+		packet_t simulatedAccValues = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
+		auto response = communicator.request(simulatedAccValues);
+
 		/* initialize random seed: */
 		srand(time(NULL));
 
@@ -139,11 +147,12 @@ int main(int argc, char** argv)
 
 	auto dist = freqStats.getDistribution();
 
-	std::sort(dist->begin(), dist->end(), [](freqdist_entry_t a, freqdist_entry_t b){return a.value < b.value;});
+	std::sort(dist->begin(), dist->end(), [](freqdist_entry_t a, freqdist_entry_t b)
+	{	return a.value < b.value;});
 
 	std::ofstream myfile;
 	myfile.open("wcet-dist.csv");
-	for(auto& slot : *dist)
+	for (auto& slot : *dist)
 		myfile << slot.value << "," << slot.counts << "\n";
 
 	myfile.close();
