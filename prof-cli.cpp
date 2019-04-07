@@ -7,15 +7,12 @@
 #include "Utility/FrequencyDistribution.h"
 #include "UI/CommandLineInterface.h"
 #include <iostream>
-
 #include <chrono>
-#include <thread>
-#include <cmath>
 #include <signal.h>
-#include <stdlib.h>
-#include <time.h>
 #include <algorithm>
 #include <fstream>
+#include <cmath>
+#include <thread>
 
 using namespace UI;
 
@@ -50,6 +47,8 @@ int main(int argc, char** argv)
 	int iterations = atoi(argv[1]);
 	int uiUpdateIterations = atoi(argv[2]);
 
+	std::string taskname(argv[3]);
+
 	FrequencyDistribution freqStats;
 
 	signal(SIGINT, sigfunc);
@@ -70,8 +69,11 @@ int main(int argc, char** argv)
 	char profRequestBuffer = 'P';
 	int32_t simAccValues[3] = { 1, 20, -1 };
 
-	packet_t simulatedAccValues = { 10, 3*sizeof(int32_t), (char*) simAccValues };
-	packet_t profilingRequest = { 20, 1, &profRequestBuffer };
+	packet_t simulatedAccValues = { 20, 3*sizeof(int32_t), (char*) simAccValues };
+	packet_t profilingRequest = { 10, 1, &profRequestBuffer };
+	packet_t profilingTarget = {30, static_cast<uint16_t>(taskname.length() + 1), const_cast<char*>(taskname.c_str())};
+
+	communicator.request(profilingTarget);
 	unsigned int counter = 0;
 	int uiIterations = 0;
 	MinMax minMaxStats;
