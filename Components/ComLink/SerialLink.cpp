@@ -35,10 +35,10 @@ SerialLink::~SerialLink()
  *
  * Notes: This is called from the core app before any calls to read and write.
  */
-bool SerialLink::initialize()
+bool SerialLink::initialize(const std::string& initString)
 {
 	// Open the serial port. Change device path as needed (currently set to an standard FTDI USB-UART cable type device)
-	hSerialPort = open("/dev/ttyUSB0", O_RDWR);
+	hSerialPort = open(initString.c_str(), O_RDWR);
 
 	if (hSerialPort < 0)
 	{

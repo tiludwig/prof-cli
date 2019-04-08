@@ -10,7 +10,7 @@
 
 
 #include <stdint.h>
-
+#include <string>
 /*
  * Name: 	IComLink
  *
@@ -44,7 +44,7 @@ public:
 	 *
 	 * Notes: This is called from the core app before any calls to read and write.
 	 */
-	virtual bool initialize() = 0;
+	virtual bool initialize(const std::string& initString) = 0;
 
 	/*
 	 * Name:		write

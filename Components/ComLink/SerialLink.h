@@ -9,6 +9,7 @@
 #define COMPONENTS_COMLINK_SERIALLINK_H_
 
 #include "IComLink.h"
+#include <string>
 
 class SerialLink: public IComLink
 {
@@ -28,7 +29,7 @@ public:
 	 *
 	 * Notes: This is called from the core app before any calls to read and write.
 	 */
-	virtual bool initialize();
+	virtual bool initialize(const std::string& initString);
 
 	/*
 	 * Name:		write
