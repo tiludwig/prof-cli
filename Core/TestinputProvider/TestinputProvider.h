@@ -9,8 +9,9 @@
 #define CORE_TESTINPUTPROVIDER_TESTINPUTPROVIDER_H_
 
 #include <datatypes.h>
+#include <string>
 
-typedef bool (*InitFunc)();
+typedef bool (*InitFunc)(std::string&);
 typedef buffer_t (*GetNextSetFunc)();
 typedef void (*FeedbackResultFunc)(result_t);
 
@@ -22,7 +23,7 @@ private:
 	GetNextSetFunc getNextDatasetFunc;
 	FeedbackResultFunc feedbackResultFunc;
 public:
-	bool initialize();
+	bool initialize(std::string& pluginpath);
 
 	buffer_t getNextDataset();
 
