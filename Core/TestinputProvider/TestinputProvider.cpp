@@ -8,7 +8,7 @@
 #include <Core/TestinputProvider/TestinputProvider.h>
 #include <dlfcn.h>
 
-bool TestinputProvider::initialize(std::string& pluginpath)
+bool TestinputProvider::initialize(const std::string& pluginpath)
 {
 	return initFunc(pluginpath);
 }
