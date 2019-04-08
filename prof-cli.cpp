@@ -37,12 +37,7 @@ void sigfunc(int sig)
 		return;
 	else
 	{
-		fflush(stdout);
-		printf("\e[2J\e[0;0H");
-		fflush(stdout);
-		printf("Profiling done.\n");
-		printf("Measured WCET: %u cycles [%.2f us].\n", wcet, (wcet / 72.0));
-		exit(0);
+		bRunning = false;
 	}
 }
 
@@ -127,6 +122,10 @@ int main(int argc, char** argv)
 
 		for (int i = 0; i < iterations; i++)
 		{
+			if(bRunning == false)
+				break;
+
+
 			auto dataset = provider.getNextDataset();
 			packet_t simulatedAccValues = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
 			auto response = communicator.request(simulatedAccValues);
@@ -166,16 +165,13 @@ int main(int argc, char** argv)
 			int64_t estimatedSeconds = meanduration * (iterations - i) / 1000000;
 			ui.showRemainingTime(estimatedSeconds);
 			ui.render();
-
-			//printf("Setting: %d %d %d\n", ((int32_t*)dataset.data)[0], ((int32_t*)dataset.data)[1], ((int32_t*)dataset.data)[2]);
 		}
 
-		fflush(stdout);
-		printf("\e[2J\e[0;0H");
-		fflush(stdout);
+		ui.destroy();
+
 		printf("Profiling done.\n");
 		printf("Measured WCET: %u cycles [%.2f us].\n", wcet, (wcet / 72.0));
-
+		fflush(stdout);
 		auto dist = freqStats.getDistribution();
 
 		std::sort(dist->begin(), dist->end(), [](freqdist_entry_t a, freqdist_entry_t b)
