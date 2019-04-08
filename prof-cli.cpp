@@ -13,7 +13,11 @@
 #include <fstream>
 #include <cmath>
 #include <thread>
+#include <sstream>
+#include <unistd.h>
+#include <limits.h>
 
+#include "Core/Configuration/Configuration.h"
 #include "Core/TestinputProvider/TestinputProvider.h"
 
 using namespace UI;
@@ -46,14 +50,61 @@ void printDist(FrequencyDistribution& freqStat)
 
 int main(int argc, char** argv)
 {
-	int iterations = atoi(argv[1]);
-	int uiUpdateIterations = atoi(argv[2]);
+	try{
+	char buf[PATH_MAX];
+	readlink("/proc/self/exe", buf, PATH_MAX);
 
-	std::string taskname(argv[3]);
-	std::string inputprovider(argv[4]);
+	printf("path is: %s\n", buf);
+	std::string basePath(buf);
+	auto index = basePath.find_last_of('/');
+	if (index == std::string::npos)
+	{
+		printf("Unable to get base path\n");
+		return 1;
+	}
+	basePath.erase(index);
+
+	printf("path is: %s\nindex is: %d\n", basePath.c_str(), index);
+
+#ifndef DEBUG
+	index = basePath.find_last_of('/');
+	if (index == std::string::npos)
+	{
+		printf("Unable to get base path\n");
+		return 1;
+	}
+	basePath.erase(index);
+#endif
+
+	printf("path is: %s\n", basePath.c_str());
+
+	Configuration cfg;
+	std::ifstream stream(basePath + "/bin/config.ini");
+	if (!stream.is_open())
+	{
+		printf("Unable to locate configuration file\n");
+		return 1;
+	}
+	stream >> cfg;
+	printf("config loaded\n");
+	std::string pluginPath(basePath);
+	pluginPath += "/plugins/";
+
+	int iterations = std::stoi(cfg["measurement.iterations"]);
+	int uiUpdateIterations = std::stoi(cfg["core.ui-update-freq"]);
+
+	printf("iter and ui set\n");
+
+	std::string taskname(cfg["measurement.sut-name"]);
+	std::string inputprovider(pluginPath);
+	inputprovider += cfg["measurement.input-provider"];
 
 	TestinputProvider provider = TestinputProvider::loadPlugin(inputprovider.c_str());
-	provider.initialize();
+	if (provider.initialize(pluginPath) == false)
+	{
+		printf("Failed to initialize plugin\n");
+		return -2;
+	}
 	FrequencyDistribution freqStats;
 
 	signal(SIGINT, sigfunc);
@@ -61,15 +112,25 @@ int main(int argc, char** argv)
 	CommandLineInterface ui;
 	ui.initialize(iterations, uiUpdateIterations);
 
-	SerialLink link;
+	IComLink* link;
+	std::string driver = cfg["core.comdriver"];
+	if (driver == "serial")
+	{
+		link = new SerialLink();
+	}
+	else
+	{
+		printf("Unable to locate communication driver '%s'\n", driver.c_str());
+		return -2;
+	}
 
-	if (link.initialize() == false)
+	if (link->initialize(cfg["core.device"]) == false)
 	{
 		printf("Error initializing serial port\n");
 		return 0;
 	}
 
-	PacketCommunicator communicator(&link);
+	PacketCommunicator communicator(link);
 
 	char profRequestBuffer = 'P';
 	//int32_t simAccValues[3] = { 1, 20, -1 };
@@ -156,4 +217,9 @@ int main(int argc, char** argv)
 		myfile << slot.value << "," << slot.counts << "\n";
 
 	myfile.close();
+	}
+	catch(const char* msg)
+	{
+		printf("Error: %s\n", msg);
+	}
 }
