@@ -55,7 +55,7 @@ std::string ltrim(const std::string& text)
 std::string rtrim(const std::string& text)
 {
 	auto lastChar = text.find_last_not_of(" \t");
-	return text.substr(0, lastChar+1);
+	return text.substr(0, lastChar + 1);
 }
 
 std::string trim(const std::string& text)
@@ -71,22 +71,48 @@ void operator>>(std::istream& stream, Configuration& cfg)
 	{
 		// remove comments
 		auto commentIndex = line.find('#');
-		if(commentIndex != string::npos)
+		if (commentIndex != string::npos)
 			line.erase(commentIndex);
 
 		auto tokenIndex = line.find('[');
-		if(tokenIndex != string::npos)
+		if (tokenIndex != string::npos)
 		{
 			auto endIndex = line.find(']');
-			currentSection = trim(line.substr(tokenIndex+1, endIndex - tokenIndex - 1));
+			currentSection = trim(line.substr(tokenIndex + 1, endIndex - tokenIndex - 1));
 			continue;
 		}
 		auto separatorIndex = line.find('=');
-		if(separatorIndex == string::npos)
+		if (separatorIndex == string::npos)
 			continue;
 
 		auto key = trim(line.substr(0, separatorIndex));
-		auto value = trim(line.substr(separatorIndex +1, line.size() - separatorIndex));
+		auto value = trim(line.substr(separatorIndex + 1, line.size() - separatorIndex));
 		cfg.add(currentSection + '.' + key, value);
 	}
 }
+
+unsigned int Configuration::getIterations()
+{
+	return std::stoi(getValue("measurement.iterations"));
+}
+
+unsigned int Configuration::getUiUpdateFrequency()
+{
+	return std::stoi(getValue("core.ui-update-freq"));
+}
+
+std::string& Configuration::getSuTName()
+{
+	return getValue("measurement.sut-name");
+}
+
+std::string& Configuration::getInputProviderName()
+{
+	return getValue("measurement.input-provider");
+}
+
+std::string& Configuration::getComdriverType()
+{
+	return getValue("core.comdriver");
+}
+

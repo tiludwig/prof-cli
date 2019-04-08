@@ -21,7 +21,8 @@
 #include "Core/TestinputProvider/TestinputProvider.h"
 
 #include "Factories/ComLinkFactory.h"
-#include "Utility/PathManager.h"
+#include "Utility/PathManager/PathManager.h"
+#include "Utility/PathManager/DebugPathManager.h"
 
 using namespace UI;
 
@@ -55,7 +56,12 @@ int main(int argc, char** argv)
 {
 	try
 	{
+#ifdef DEBUG
+		DebugPathManager path;
+#else
 		PathManager path;
+#endif
+
 		path.initialize();
 
 		Configuration cfg;
@@ -67,15 +73,15 @@ int main(int argc, char** argv)
 		}
 		stream >> cfg;
 
-		int iterations = std::stoi(cfg["measurement.iterations"]);
-		int uiUpdateIterations = std::stoi(cfg["core.ui-update-freq"]);
+		int iterations = cfg.getIterations();
+		int uiUpdateIterations = cfg.getUiUpdateFrequency();
 
-		std::string taskname(cfg["measurement.sut-name"]);
+		std::string taskname = cfg.getSuTName();
 		std::string inputprovider(path.getPluginpath());
-		inputprovider += cfg["measurement.input-provider"];
+		inputprovider += cfg.getInputProviderName();
 
 		TestinputProvider provider = TestinputProvider::loadPlugin(inputprovider.c_str());
-		if (provider.initialize(path.getPluginpath()) == false)
+		if (provider.initialize(path.getDatapath()) == false)
 		{
 			printf("Failed to initialize plugin\n");
 			return -2;
@@ -86,7 +92,7 @@ int main(int argc, char** argv)
 		CommandLineInterface ui;
 		ui.initialize(iterations, uiUpdateIterations);
 
-		auto link = ComLinkFactory::CreateComLink(cfg["core.comdriver"]);
+		auto link = ComLinkFactory::CreateComLink(cfg.getComdriverType());
 		if(link == nullptr)
 		{
 			printf("Failed to load communication driver.\n");
@@ -123,8 +129,6 @@ int main(int argc, char** argv)
 			auto dataset = provider.getNextDataset();
 			packet_t simulatedAccValues = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
 			auto response = communicator.request(simulatedAccValues);
-
-
 
 			/* initialize random seed: */
 			srand(time(NULL));

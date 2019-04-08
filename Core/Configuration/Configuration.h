@@ -28,6 +28,12 @@ public:
 	void add(const std::string& key, const std::string& value);
 
 	friend void operator>>(std::istream&, Configuration&);
+
+	unsigned int getIterations();
+	unsigned int getUiUpdateFrequency();
+	std::string& getSuTName();
+	std::string& getInputProviderName();
+	std::string& getComdriverType();
 };
 
 #endif /* CORE_CONFIGURATION_CONFIGURATION_H_ */
