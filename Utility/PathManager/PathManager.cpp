@@ -5,10 +5,15 @@
  *      Author: tim
  */
 
-#include <Utility/PathManager.h>
+#include <Utility/PathManager/PathManager.h>
 
 #include <unistd.h>
 #include <climits>
+
+PathManager::~PathManager()
+{
+
+}
 
 bool PathManager::initialize()
 {
@@ -42,18 +47,15 @@ std::string PathManager::getBasepath() const
 
 std::string PathManager::getPluginpath() const
 {
-#ifdef DEBUG
-	return "/home/tim/repos/dev/imu_emulator/Debug/";
-#else
 	return basepath + "/plugins/";
-#endif
 }
 
 std::string PathManager::getBinarypath() const
 {
-#ifdef DEBUG
-	return basepath + "/Debug/";
-#else
 	return basepath + "/bin/";
-#endif
+}
+
+std::string PathManager::getDatapath() const
+{
+	return getPluginpath();
 }

@@ -12,14 +12,16 @@
 
 class PathManager
 {
-private:
+protected:
 	std::string basepath;
 public:
-	bool initialize();
+	virtual ~PathManager();
+	virtual bool initialize();
 
-	std::string getBasepath() const;
-	std::string getPluginpath() const;
-	std::string getBinarypath() const;
+	virtual std::string getBasepath() const;
+	virtual std::string getPluginpath() const;
+	virtual std::string getBinarypath() const;
+	virtual std::string getDatapath() const;
 };
 
 #endif /* UTILITY_PATHMANAGER_H_ */
