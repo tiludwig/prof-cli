@@ -24,6 +24,8 @@
 #include "Utility/PathManager/PathManager.h"
 #include "Utility/PathManager/DebugPathManager.h"
 
+#include "UI/UserInterface.h"
+
 using namespace UI;
 
 volatile bool bRunning = true;
@@ -74,7 +76,6 @@ int main(int argc, char** argv)
 		stream >> cfg;
 
 		int iterations = cfg.getIterations();
-		int uiUpdateIterations = cfg.getUiUpdateFrequency();
 
 		std::string taskname = cfg.getSuTName();
 		std::string inputprovider(path.getPluginpath());
@@ -89,11 +90,12 @@ int main(int argc, char** argv)
 		FrequencyDistribution freqStats;
 		signal(SIGINT, sigfunc);
 
-		CommandLineInterface ui;
-		ui.initialize(iterations, uiUpdateIterations);
+		UserInterface ui;
+		ui.initialize();
+		ui.setMaximumSampleCount(iterations);
 
 		auto link = ComLinkFactory::CreateComLink(cfg.getComdriverType());
-		if(link == nullptr)
+		if (link == nullptr)
 		{
 			printf("Failed to load communication driver.\n");
 			return -1;
@@ -116,7 +118,6 @@ int main(int argc, char** argv)
 
 		communicator.request(profilingTarget);
 		unsigned int counter = 0;
-		int uiIterations = 0;
 		MinMax minMaxStats;
 		Variance varStats;
 		Variance timeStats;
@@ -151,31 +152,22 @@ int main(int argc, char** argv)
 				varStats.update(execTime);
 				freqStats.update(execTime);
 
-				if (uiIterations == uiUpdateIterations)
-				{
-					uiIterations = 0;
-					ui.printResult(minMaxStats.getMax());
-					printf("\tMean: %f\n", varStats.getMean());
-					printf("\tStd.Dev.: %f\n", sqrt(varStats.getVariance()));
-					printf("\tSample Count: %u\n", varStats.getSampleCount());
-					//printDist(freqStats);
-				}
-				uiIterations++;
-				ui.updateCurrentProgressbar(uiIterations);
-				ui.updateTotalProgressbar(i);
+				ui.showMeasurementResult(execTime);
+				ui.showWCET(minMaxStats.getMax());
+				ui.showSampleCount(i);
+				ui.updateOverallIterations(i);
+
 			}
 
 			end = std::chrono::steady_clock::now();
 			auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 			timeStats.update(duration);
-			if ((i % 100) == 0)
-			{
-				double meanduration = timeStats.getMean();
-				int64_t estimatedSeconds = meanduration * (iterations - i) / 1000000;
-				ui.printRemainingTime(estimatedSeconds);
-			}
+			double meanduration = timeStats.getMean();
+			int64_t estimatedSeconds = meanduration * (iterations - i) / 1000000;
+			ui.showRemainingTime(estimatedSeconds);
+			ui.render();
 
-			printf("Setting: %d %d %d\n", ((int32_t*)dataset.data)[0], ((int32_t*)dataset.data)[1], ((int32_t*)dataset.data)[2]);
+			//printf("Setting: %d %d %d\n", ((int32_t*)dataset.data)[0], ((int32_t*)dataset.data)[1], ((int32_t*)dataset.data)[2]);
 		}
 
 		fflush(stdout);
