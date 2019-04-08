@@ -16,11 +16,12 @@ UserInterface::UserInterface()
 	uiIterations = 0;
 	iterations = 0;
 	samples = 0;
+	destroyed = false;
 }
 
 UserInterface::~UserInterface()
 {
-	endwin();
+	destroy();
 }
 
 void UserInterface::log(const char* format, ...)
@@ -77,14 +78,29 @@ void UserInterface::showRemainingTime(uint64_t secondsRemaining)
 	int minutes = secondsRemaining / 60;
 	secondsRemaining -= (minutes * 60);
 
+	mvwhline(statusWindow, 3, 1, ' ', 80);
 	mvwprintw(statusWindow, 3, 1, "Remaining time: %dh%dm%ds", hours, minutes, secondsRemaining);
 	refresh();
+}
+
+void UserInterface::destroy()
+{
+	if (!destroyed)
+	{
+		destroyed = true;
+		delwin(logWindow);
+		delwin(statusWindow);
+		endwin();
+	}
 }
 
 void UserInterface::render()
 {
 	timeTillFinishedProgressBar.draw();
 
+	mvwhline(statusWindow, 4, 1, ' ', 80);
+	mvwhline(statusWindow, 5, 1, ' ', 80);
+	mvwhline(statusWindow, 6, 1, ' ', 80);
 	mvwprintw(statusWindow, 4, 1, "Measured execution time: %u", cycles);
 	mvwprintw(statusWindow, 5, 1, "Measured WCET: %u", wcet);
 	mvwprintw(statusWindow, 6, 1, "Sample count: %u", samples);

@@ -26,6 +26,7 @@ protected:
 	uint32_t samples;
 	uint32_t uiIterations;
 	uint32_t iterations;
+	bool destroyed;
 public:
 	UserInterface();
 	~UserInterface();
@@ -39,6 +40,8 @@ public:
 	{
 		timeTillFinishedProgressBar.setMaximum(maxSamples);
 	}
+
+	void destroy();
 
 	void showWCET(uint32_t wcet);
 	void showMeasurementResult(uint32_t cycles);
