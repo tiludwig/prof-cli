@@ -6,11 +6,12 @@
  */
 
 #include <Core/TestinputProvider/TestinputProvider.h>
+#include <Core/Exceptions/CustomException.h>
 #include <dlfcn.h>
 
-bool TestinputProvider::initialize(const std::string& pluginpath)
+bool TestinputProvider::initialize(const std::string& pluginpath, const std::string& pluginArgs)
 {
-	return initFunc(pluginpath);
+	return initFunc(pluginpath, pluginArgs);
 }
 
 buffer_t TestinputProvider::getNextDataset()
@@ -29,7 +30,8 @@ TestinputProvider TestinputProvider::loadPlugin(const char* path)
 	provider.handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
 	if(provider.handle == nullptr)
 	{
-		throw "Unable to open datagenerator plugin.";
+		printf("%s\n", dlerror());
+		throw CustomException("Unable to open datagenerator plugin");
 	}
 	provider.initFunc = reinterpret_cast<InitFunc>(dlsym(provider.handle, "initialize"));
 	provider.getNextDatasetFunc = reinterpret_cast<GetNextSetFunc>(dlsym(provider.handle, "getNextDataset"));

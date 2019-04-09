@@ -11,7 +11,7 @@
 #include <datatypes.h>
 #include <string>
 
-typedef bool (*InitFunc)(const std::string&);
+typedef bool (*InitFunc)(const std::string&, const std::string&);
 typedef buffer_t (*GetNextSetFunc)();
 typedef void (*FeedbackResultFunc)(result_t);
 
@@ -23,7 +23,7 @@ private:
 	GetNextSetFunc getNextDatasetFunc;
 	FeedbackResultFunc feedbackResultFunc;
 public:
-	bool initialize(const std::string& pluginpath);
+	bool initialize(const std::string& pluginpath, const std::string& pluginArgs);
 
 	buffer_t getNextDataset();
 
