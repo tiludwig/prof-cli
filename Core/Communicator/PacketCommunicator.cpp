@@ -8,7 +8,16 @@
 #include <Core/Communicator/PacketCommunicator.h>
 #include <cstdio>
 
+PacketCommunicator::PacketCommunicator(){
+	comDriver = nullptr;
+}
+
 PacketCommunicator::PacketCommunicator(IComLink* link)
+{
+	comDriver = link;
+}
+
+void PacketCommunicator::setLink(IComLink* link)
 {
 	comDriver = link;
 }

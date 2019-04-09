@@ -22,7 +22,10 @@ private:
 	void send(char* buffer, uint16_t size);
 	void sendByte(char value);
 public:
+	PacketCommunicator();
 	PacketCommunicator(IComLink* link);
+
+	void setLink(IComLink* link);
 
 	int8_t calculateChecksum(packet_t& packet);
 	void sendPacket(packet_t& packet);
