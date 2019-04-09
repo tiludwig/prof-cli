@@ -6,9 +6,10 @@
  */
 
 #include <Utility/PathManager/PathManager.h>
-
+#include <Core/Exceptions/CustomException.h>
 #include <unistd.h>
 #include <climits>
+#include <errno.h>
 
 PathManager::~PathManager()
 {
@@ -24,16 +25,14 @@ bool PathManager::initialize()
 	auto index = basepath.find_last_of('/');
 	if (index == std::string::npos)
 	{
-		printf("Unable to get base path\n");
-		return false;
+		throw CustomException(errno, "Failed to resolve basepath");
 	}
 	basepath.erase(index);
 
 	index = basepath.find_last_of('/');
 	if (index == std::string::npos)
 	{
-		printf("Unable to get base path\n");
-		return false;
+		throw CustomException(errno, "Failed to resolve basepath");
 	}
 	basepath.erase(index);
 

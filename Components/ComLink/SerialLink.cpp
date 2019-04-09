@@ -7,6 +7,8 @@
 
 #include "SerialLink.h"
 
+#include <Core/Exceptions/CustomException.h>
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -42,8 +44,8 @@ bool SerialLink::initialize(const std::string& initString)
 
 	if (hSerialPort < 0)
 	{
-		printf("Error %i opening the serial port: %s\n", errno, strerror(errno));
-		return false;
+		//printf("Error %i opening the serial port: %s\n", errno, strerror(errno));
+		throw CustomException(errno, "Unable to open the serial port");
 	}
 
 	// Create new termios struc, we call it 'tty' for convention
@@ -53,10 +55,10 @@ bool SerialLink::initialize(const std::string& initString)
 	// Read in existing settings, and handle any error
 	if (tcgetattr(hSerialPort, &tty) != 0)
 	{
-		printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+		//printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
 		close(hSerialPort);
 		hSerialPort = -1;
-		return false;
+		throw CustomException(errno, "Unable to read settings of serial port");
 	}
 
 	tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
@@ -88,10 +90,10 @@ bool SerialLink::initialize(const std::string& initString)
 	// Save tty settings, also checking for error
 	if (tcsetattr(hSerialPort, TCSANOW, &tty) != 0)
 	{
-		printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+		//printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
 		close(hSerialPort);
 		hSerialPort = -1;
-		return false;
+		throw CustomException(errno, "Unable to apply serial port settings");
 	}
 
 	return true;
@@ -134,10 +136,11 @@ uint8_t SerialLink::readData()
 		num_bytes = read(hSerialPort, &recvdByte, 1);
 		if (num_bytes < 0)
 		{
-			printf("Error %i from readData: %s\n", errno, strerror(errno));
+			//printf("Error %i from readData: %s\n", errno, strerror(errno));
 			close(hSerialPort);
 			hSerialPort = -1;
-			return 0;
+			throw CustomException(errno, "Failed to read data from serial port");
+			//return 0;
 		}
 	}
 

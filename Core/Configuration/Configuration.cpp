@@ -6,7 +6,7 @@
  */
 
 #include <Core/Configuration/Configuration.h>
-
+#include <Core/Exceptions/CustomException.h>
 #include <algorithm>
 
 using namespace std;
@@ -31,7 +31,7 @@ std::string& Configuration::getValue(const std::string& key)
 	}
 	else
 	{
-		throw "Unable to find key in configuration";
+		throw CustomException("Unable to find key in configuration");
 	}
 }
 
