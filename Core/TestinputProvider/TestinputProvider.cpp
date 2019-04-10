@@ -11,7 +11,7 @@
 
 bool TestinputProvider::initialize(const std::string& pluginpath, const std::string& pluginArgs)
 {
-	return initFunc(pluginpath, pluginArgs);
+	return initFunc(pluginpath.c_str(), pluginArgs.c_str());
 }
 
 buffer_t TestinputProvider::getNextDataset()

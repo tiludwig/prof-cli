@@ -11,7 +11,7 @@
 #include <datatypes.h>
 #include <string>
 
-typedef bool (*InitFunc)(const std::string&, const std::string&);
+typedef bool (*InitFunc)(const char*, const char*);
 typedef buffer_t (*GetNextSetFunc)();
 typedef void (*FeedbackResultFunc)(result_t);
 

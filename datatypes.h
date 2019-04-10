@@ -10,14 +10,14 @@
 
 #include <stdint.h>
 
-struct buffer_t
+extern "C" struct buffer_t
 {
 	char* data;
 	uint32_t size;
 	uint32_t index;
 };
 
-struct result_t
+extern "C" struct result_t
 {
 	uint32_t cycles;
 };
