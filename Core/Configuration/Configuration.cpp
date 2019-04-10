@@ -93,12 +93,12 @@ void operator>>(std::istream& stream, Configuration& cfg)
 
 unsigned int Configuration::getIterations()
 {
-	return std::stoi(getValue("measurement.iterations"));
+	return std::stoul(getValue("measurement.iterations"));
 }
 
 unsigned int Configuration::getUiUpdateFrequency()
 {
-	return std::stoi(getValue("core.ui-update-freq"));
+	return std::stoul(getValue("core.ui-update-freq"));
 }
 
 std::string& Configuration::getSuTName()
