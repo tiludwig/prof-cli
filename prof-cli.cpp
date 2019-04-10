@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <Core/Application/Application.h>
 #include <Core/Exceptions/CustomException.h>
+#include <cstring>
 
 Application app;
 
@@ -29,7 +30,7 @@ int main(int argc, char** argv)
 
 	} catch (CustomException& ex)
 	{
-		printf("Error: %s\nErrorcode: %d\n", ex.getMessage(), ex.getErrorCode());
+		printf("Error: %s\n\rErrorcode: %d\n\rSystem message: %s\r\n", ex.getMessage(), ex.getErrorCode(), strerror(ex.getErrorCode()));
 	}
 	catch(const char* ex)
 	{
