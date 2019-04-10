@@ -73,9 +73,9 @@ void Application::run()
 {
 	RemainingTime remainingTime;
 
-	int iterations = configuration.getIterations();
-
-	for (int i = 0; i < iterations; i++)
+	unsigned int iterations = configuration.getIterations();
+	int uiWaitIterations = 100;
+	for (unsigned int i = 0; i < iterations; i++)
 	{
 		if (bRunning == false)
 			break;
@@ -89,8 +89,9 @@ void Application::run()
 		auto measurement = profiler.profile(communicator, inputProvider);
 		remainingTime.endMeasurement();
 
-		//if ((i % 500) == 0)
+		//if ((uiWaitIterations--) <= 0)
 		{
+			//uiWaitIterations = 100;
 			ui.showMeasurementResult(measurement);
 			ui.showWCET(profiler.getWCET());
 			ui.showSampleCount(i);
