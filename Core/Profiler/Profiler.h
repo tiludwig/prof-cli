@@ -24,7 +24,7 @@ private:
 	Variance varStats;
 	FrequencyDistribution freqDistribution;
 private:
-	constexpr packet_t buildProfilingRequestPacket() const;
+	packet_t buildProfilingRequestPacket() const;
 public:
 	Profiler();
 	~Profiler();

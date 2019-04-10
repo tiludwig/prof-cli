@@ -119,6 +119,7 @@ bool PacketProtocol::getPacket(packet_t& packet)
 
 	packet.id = receivedPacket.id;
 	packet.size.value = receivedPacket.size.value;
-	packet.payload = receiveBuffer.data();
+	//packet.payload.add(receiveBuffer.data(),
+	packet.payload.add(receiveBuffer.data(), receivedPacket.size.value);
 	return true;
 }

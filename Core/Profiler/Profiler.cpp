@@ -20,14 +20,21 @@ Profiler::~Profiler()
 
 bool Profiler::setProfilingTarget(const std::string& targetname, PacketCommunicator& communicator)
 {
-	packet_t profilingTarget = { 30, static_cast<uint16_t>(targetname.length() + 1), const_cast<char*>(targetname.c_str()) };
+	packet_t profilingTarget;// = { 30, static_cast<uint16_t>(targetname.length() + 1), const_cast<char*>(targetname.c_str()) };
+	profilingTarget.id = 30;
+	profilingTarget.size.value = static_cast<uint16_t>(targetname.length() + 1);
+	profilingTarget.payload.add(targetname);
+
 	communicator.request(profilingTarget);
 	return true;
 }
 
-constexpr packet_t Profiler::buildProfilingRequestPacket() const
+packet_t Profiler::buildProfilingRequestPacket() const
 {
-	packet_t profilingRequest = { 10, 1, const_cast<char*>("P") };
+	packet_t profilingRequest;
+	profilingRequest.id = 10;
+	profilingRequest.size.value = 1;
+	profilingRequest.payload.add('P');
 	return profilingRequest;
 }
 
@@ -35,7 +42,10 @@ uint64_t Profiler::profile(PacketCommunicator& communicator, TestinputProvider& 
 {
 	// send input values
 	auto dataset = dataprovider.getNextDataset();
-	packet_t simulatedAccValues = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
+	packet_t simulatedAccValues;// = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
+	simulatedAccValues.id = 20;
+	simulatedAccValues.size.value = static_cast<uint16_t>(dataset.size);
+	simulatedAccValues.payload.add(dataset.data, dataset.size);
 	auto response = communicator.request(simulatedAccValues);
 
 	// start profiler
@@ -44,7 +54,7 @@ uint64_t Profiler::profile(PacketCommunicator& communicator, TestinputProvider& 
 
 	if (response.id == 65)
 	{
-		uint32_t* payload = (uint32_t*) response.payload;
+		uint32_t* payload = (uint32_t*) response.payload.data();
 		uint32_t execTime = payload[0];
 
 		minMaxStats.update(execTime);

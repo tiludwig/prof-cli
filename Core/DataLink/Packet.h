@@ -9,6 +9,7 @@
 #define CORE_DATALINK_PACKET_H_
 
 #include <stdint.h>
+#include <Core/Payload/Payload.h>
 
 union packet_size_t
 {
@@ -24,6 +25,6 @@ struct packet_t
 {
 	uint8_t id;
 	packet_size_t size;
-	char* payload;
+	Payload payload;
 };
 #endif /* CORE_DATALINK_PACKET_H_ */

@@ -69,7 +69,7 @@ void PacketCommunicator::sendPacket(packet_t& packet)
 	sendByte(packet.id);
 	sendByte(packet.size.raw.lsb);
 	sendByte(packet.size.raw.msb);
-	send(packet.payload, packet.size.value);
+	send(packet.payload.data(), packet.size.value);
 	sendByte(checksum);
 }
 
