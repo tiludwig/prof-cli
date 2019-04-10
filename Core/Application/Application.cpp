@@ -81,25 +81,27 @@ void Application::run()
 			break;
 
 		/* initialize random seed: */
-		srand(time(NULL));
-
+		//srand(time(NULL));
 		/* generate delay number between 1 and 10: */
-		int delayTime = rand() % 5 + 1;
-		std::this_thread::sleep_for(std::chrono::milliseconds(delayTime));
-
+		//int delayTime = rand() % 5 + 1;
+		//std::this_thread::sleep_for(std::chrono::milliseconds(delayTime));
 		remainingTime.startMeasurement();
 		auto measurement = profiler.profile(communicator, inputProvider);
 		remainingTime.endMeasurement();
 
-		ui.showMeasurementResult(measurement);
-		ui.showWCET(profiler.getWCET());
-		ui.showSampleCount(i);
-		ui.updateOverallIterations(i);
+		//if ((i % 500) == 0)
+		{
+			ui.showMeasurementResult(measurement);
+			ui.showWCET(profiler.getWCET());
+			ui.showSampleCount(i);
+			ui.updateOverallIterations(i);
 
-		auto secondsLeft = remainingTime.calculateRemainingSeconds(iterations - i);
+			auto secondsLeft = remainingTime.calculateRemainingSeconds(iterations - i);
 
-		ui.showRemainingTime(secondsLeft);
-		ui.render();
+			ui.showRemainingTime(secondsLeft);
+			ui.render();
+		}
+
 	}
 
 	ui.destroy();
