@@ -31,9 +31,11 @@ public:
 
 	unsigned int getIterations();
 	unsigned int getUiUpdateFrequency();
-	std::string& getSuTName();
+	std::string& getTaskName();
 	std::string& getInputProviderName();
 	std::string& getComdriverType();
+
+	bool getValueIfExists(const std::string& key, std::string& value);
 };
 
 #endif /* CORE_CONFIGURATION_CONFIGURATION_H_ */

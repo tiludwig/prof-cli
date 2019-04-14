@@ -31,7 +31,11 @@ std::string& Configuration::getValue(const std::string& key)
 	}
 	else
 	{
-		throw CustomException("Unable to find key in configuration");
+		std::string message("Unable to find key '");
+		message += key;
+		message += "' in configuration";
+		//in configuration");
+		throw CustomException(message);
 	}
 }
 
@@ -104,14 +108,9 @@ unsigned int Configuration::getIterations()
 	return std::stoul(getValue("measurement.iterations"));
 }
 
-unsigned int Configuration::getUiUpdateFrequency()
+std::string& Configuration::getTaskName()
 {
-	return std::stoul(getValue("core.ui-update-freq"));
-}
-
-std::string& Configuration::getSuTName()
-{
-	return getValue("measurement.sut-name");
+	return getValue("measurement.taskname");
 }
 
 std::string& Configuration::getInputProviderName()
@@ -124,3 +123,15 @@ std::string& Configuration::getComdriverType()
 	return getValue("core.comdriver");
 }
 
+bool Configuration::getValueIfExists(const std::string& key, std::string& value)
+{
+	try
+	{
+		value = getValue(key);
+		return true;
+	}
+	catch(...)
+	{
+		return false;
+	}
+}

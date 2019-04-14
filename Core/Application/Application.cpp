@@ -59,7 +59,7 @@ bool Application::initialize()
 	communicator.setLink(link);
 
 	// initialize profiler
-	profiler.setProfilingTarget(configuration.getSuTName(), communicator);
+	profiler.setProfilingTarget(configuration.getTaskName(), communicator);
 
 	return true;
 }
@@ -74,7 +74,6 @@ void Application::run()
 	RemainingTime remainingTime;
 
 	unsigned int iterations = configuration.getIterations();
-	int uiWaitIterations = 100;
 	for (unsigned int i = 0; i < iterations; i++)
 	{
 		if (bRunning == false)
@@ -107,9 +106,20 @@ void Application::run()
 
 	ui.destroy();
 
-	auto wcet = profiler.getWCET();
 	printf("Profiling done.\n");
+	auto wcet = profiler.getWCET();
+	uint32_t baseline = 0;
+
+	// maybe subtract the baseline measurement
+	std::string strWcet;
+	if(configuration.getValueIfExists("measurement.baseline-wcet", strWcet) == true)
+	{
+		baseline = std::stoul(strWcet);
+	}
+
+
 	printf("Measured WCET: %lu cycles [%.2f us].\n", wcet, (wcet / 72.0));
+	printf("Adjusted WCET: %lu cycles [%.2f us].\n", (wcet - baseline), ((wcet - baseline) / 72.0));
 	fflush(stdout);
 	auto dist = profiler.getFrequencyDistribution();
 
