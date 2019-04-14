@@ -9,7 +9,7 @@
 
 std::string DebugPathManager::getPluginpath() const
 {
-	return "/home/tim/repos/t3_plugins/Debug/";
+	return basepath + "/Debug/plugins/";
 }
 
 std::string DebugPathManager::getBinarypath() const
