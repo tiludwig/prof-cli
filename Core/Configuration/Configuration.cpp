@@ -49,12 +49,20 @@ std::string& Configuration::operator[](const std::string& key)
 std::string ltrim(const std::string& text)
 {
 	auto firstChar = text.find_first_not_of(" \t");
+	if (firstChar == std::string::npos)
+	{
+		return text;
+	}
 	return text.substr(firstChar, text.size() - firstChar);
 }
 
 std::string rtrim(const std::string& text)
 {
 	auto lastChar = text.find_last_not_of(" \t");
+	if (lastChar == std::string::npos)
+	{
+		return text;
+	}
 	return text.substr(0, lastChar + 1);
 }
 
