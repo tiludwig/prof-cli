@@ -20,7 +20,7 @@ Profiler::~Profiler()
 
 bool Profiler::setProfilingTarget(const std::string& targetname, PacketCommunicator& communicator)
 {
-	packet_t profilingTarget;// = { 30, static_cast<uint16_t>(targetname.length() + 1), const_cast<char*>(targetname.c_str()) };
+	packet_t profilingTarget; // = { 30, static_cast<uint16_t>(targetname.length() + 1), const_cast<char*>(targetname.c_str()) };
 	profilingTarget.id = 30;
 	profilingTarget.size.value = static_cast<uint16_t>(targetname.length() + 1);
 	profilingTarget.payload.add(targetname);
@@ -42,15 +42,18 @@ uint64_t Profiler::profile(PacketCommunicator& communicator, TestinputProvider& 
 {
 	// send input values
 	auto dataset = dataprovider.getNextDataset();
-	packet_t simulatedAccValues;// = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
-	simulatedAccValues.id = 20;
-	simulatedAccValues.size.value = static_cast<uint16_t>(dataset.size);
-	simulatedAccValues.payload.add(dataset.data, dataset.size);
-	auto response = communicator.request(simulatedAccValues);
+	if (dataset.size != 0)
+	{
+		packet_t simulatedAccValues; // = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
+		simulatedAccValues.id = 20;
+		simulatedAccValues.size.value = static_cast<uint16_t>(dataset.size);
+		simulatedAccValues.payload.add(dataset.data, dataset.size);
+		communicator.request(simulatedAccValues);
+	}
 
 	// start profiler
 	auto profilingPacket = buildProfilingRequestPacket();
-	response = communicator.request(profilingPacket);
+	auto response = communicator.request(profilingPacket);
 
 	if (response.id == 65)
 	{
