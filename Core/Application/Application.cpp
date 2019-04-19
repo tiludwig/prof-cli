@@ -72,6 +72,7 @@ void Application::stop()
 void Application::run()
 {
 	RemainingTime remainingTime;
+	int dumpToDiskIterations = 500;
 
 	unsigned int iterations = configuration.getIterations();
 	for (unsigned int i = 0; i < iterations; i++)
@@ -102,6 +103,18 @@ void Application::run()
 			ui.render();
 		}
 
+		if (dumpToDiskIterations-- <= 0)
+		{
+			auto dist = profiler.getFrequencyDistribution();
+
+			std::ofstream myfile;
+			myfile.open("wcet-dist.csv", std::ofstream::out | std::ofstream::trunc);
+			for (auto& slot : *dist)
+				myfile << slot.value << "," << slot.counts << "\n";
+
+			myfile.close();
+		}
+
 	}
 
 	ui.destroy();
@@ -112,11 +125,10 @@ void Application::run()
 
 	// maybe subtract the baseline measurement
 	std::string strWcet;
-	if(configuration.getValueIfExists("measurement.baseline-wcet", strWcet) == true)
+	if (configuration.getValueIfExists("measurement.baseline-wcet", strWcet) == true)
 	{
 		baseline = std::stoul(strWcet);
 	}
-
 
 	printf("Measured WCET: %lu cycles [%.2f us].\n", wcet, (wcet / 72.0));
 	printf("Adjusted WCET: %lu cycles [%.2f us].\n", (wcet - baseline), ((wcet - baseline) / 72.0));
