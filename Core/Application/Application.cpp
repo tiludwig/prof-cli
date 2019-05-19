@@ -89,6 +89,8 @@ void Application::run()
 		auto measurement = profiler.profile(communicator, inputProvider);
 		remainingTime.endMeasurement();
 
+		result_t result = {(uint32_t)measurement};
+		inputProvider.feedbackMeasurementResult(result);
 		//if ((uiWaitIterations--) <= 0)
 		{
 			//uiWaitIterations = 100;
