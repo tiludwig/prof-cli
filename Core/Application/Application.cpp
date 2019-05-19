@@ -7,17 +7,19 @@
 
 #include <Core/Application/Application.h>
 #include <Core/Exceptions/CustomException.h>
+#include "View/PrintView.h"
 
 Application::Application()
 {
 	bRunning = true;
 	link = nullptr;
 	pathManager = nullptr;
+	view = nullptr;
 }
 
 Application::~Application()
 {
-
+	delete view;
 }
 
 bool Application::initialize()
@@ -40,8 +42,7 @@ bool Application::initialize()
 	}
 
 	// initialize user interface
-	ui.initialize();
-	ui.setMaximumSampleCount(configuration.getIterations());
+	view = new PrintView();
 
 	// initialize comdriver
 	auto link = ComLinkFactory::CreateComLink(configuration.getComdriverType());
@@ -75,6 +76,7 @@ void Application::run()
 	int dumpToDiskIterations = 500;
 
 	unsigned int iterations = configuration.getIterations();
+	view->setMaximumIterations(iterations);
 	for (unsigned int i = 0; i < iterations; i++)
 	{
 		if (bRunning == false)
@@ -89,21 +91,17 @@ void Application::run()
 		auto measurement = profiler.profile(communicator, inputProvider);
 		remainingTime.endMeasurement();
 
-		result_t result = {(uint32_t)measurement};
+		result_t result = { (uint32_t) measurement };
 		inputProvider.feedbackMeasurementResult(result);
-		//if ((uiWaitIterations--) <= 0)
-		{
-			//uiWaitIterations = 100;
-			ui.showMeasurementResult(measurement);
-			ui.showWCET(profiler.getWCET());
-			ui.showSampleCount(i);
-			ui.updateOverallIterations(i);
 
-			auto secondsLeft = remainingTime.calculateRemainingSeconds(iterations - i);
+		auto secondsLeft = remainingTime.calculateRemainingSeconds(iterations - i);
 
-			ui.showRemainingTime(secondsLeft);
-			ui.render();
-		}
+		view->setWCET(profiler.getWCET());
+		view->setCurrentExecutionTime(measurement);
+		view->setCurrentIteration(i);
+		view->setRemainingTime(secondsLeft);
+		view->update();
+
 
 		if (dumpToDiskIterations-- <= 0)
 		{
@@ -119,9 +117,7 @@ void Application::run()
 
 	}
 
-	ui.destroy();
-
-	printf("Profiling done.\n");
+	printf("\nProfiling done.\n");
 	auto wcet = profiler.getWCET();
 	uint32_t baseline = 0;
 

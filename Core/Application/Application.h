@@ -36,7 +36,7 @@
 #include <Core/Profiler/Profiler.h>
 #include <Utility/RemainingTime/RemainingTime.h>
 
-#include "UI/UserInterface.h"
+#include "View/IView.h"
 
 class Application
 {
@@ -44,7 +44,7 @@ private:
 	PathManager* pathManager;
 	Configuration configuration;
 	TestinputProvider inputProvider;
-	UserInterface ui;
+	IView* view;
 	IComLink* link;
 	PacketCommunicator communicator;
 	Profiler profiler;
