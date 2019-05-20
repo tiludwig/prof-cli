@@ -43,8 +43,8 @@ void PrintView::update()
 	int minutes = (remainingSeconds % 3600) / 60;
 	int seconds = remainingSeconds % 60;
 
-	cout << "\33[2K\rMeasuring: ";
-	cout << setw(3) << setprecision(0) << right << (100 * percent) << '%';
+	cout << "\33[2K\rMeasuring: samples=" << fixed << currentIteration << ' ';
+	cout << setw(3) << setprecision(0) << right << (100 * percent) << "% ";
 
 	cout << '[' << setw(2) << hours << 'h' << setw(2) << minutes << 'm' << setw(2) << seconds << "s]";
 	cout << " wcet=" << fixed << wcet;
