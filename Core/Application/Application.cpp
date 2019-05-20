@@ -72,21 +72,19 @@ void Application::stop()
 
 void Application::run()
 {
+	printf("[App] Starting test\n");
 	RemainingTime remainingTime;
-	int dumpToDiskIterations = 500;
+	int dumpToDiskIterations = 100;
+	printf("[App] Dumping distribution to disk every %d iterations\n", dumpToDiskIterations);
 
 	unsigned int iterations = configuration.getIterations();
 	view->setMaximumIterations(iterations);
+	printf("[App] Test duration: %u iterations\n", iterations);
 	for (unsigned int i = 0; i < iterations; i++)
 	{
 		if (bRunning == false)
 			break;
 
-		/* initialize random seed: */
-		//srand(time(NULL));
-		/* generate delay number between 1 and 10: */
-		//int delayTime = rand() % 5 + 1;
-		//std::this_thread::sleep_for(std::chrono::milliseconds(delayTime));
 		remainingTime.startMeasurement();
 		auto measurement = profiler.profile(communicator, inputProvider);
 		remainingTime.endMeasurement();
@@ -102,13 +100,12 @@ void Application::run()
 		view->setRemainingTime(secondsLeft);
 		view->update();
 
-
 		if (dumpToDiskIterations-- <= 0)
 		{
 			auto dist = profiler.getFrequencyDistribution();
 
 			std::ofstream myfile;
-			myfile.open("wcet-dist.csv", std::ofstream::out | std::ofstream::trunc);
+			myfile.open(configuration["measurement.taskname"] + "-dist.csv", std::ofstream::out | std::ofstream::trunc);
 			for (auto& slot : *dist)
 				myfile << slot.value << "," << slot.counts << "\n";
 
