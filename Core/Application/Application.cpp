@@ -8,6 +8,7 @@
 #include <Core/Application/Application.h>
 #include <Core/Exceptions/CustomException.h>
 #include "View/PrintView.h"
+#include <algorithm>
 
 Application::Application()
 {
@@ -34,9 +35,9 @@ bool Application::initialize()
 
 	// initialize the input provider
 	std::string inputprovider(pathManager->getPluginpath());
-	inputprovider += configuration.getInputProviderName();
+	inputprovider += configuration["test.input-method"];//.getInputProviderName();
 	inputProvider = TestinputProvider::loadPlugin(inputprovider.c_str());
-	if (inputProvider.initialize(pathManager->getDatapath(), configuration["measurement.provider-args"]) == false)
+	if (inputProvider.initialize(pathManager->getDatapath(), configuration["test.input-args"]) == false)
 	{
 		return false;
 	}
@@ -45,13 +46,13 @@ bool Application::initialize()
 	view = new PrintView();
 
 	// initialize comdriver
-	auto link = ComLinkFactory::CreateComLink(configuration.getComdriverType());
+	auto link = ComLinkFactory::CreateComLink(configuration["core.com-driver"]);//.getComdriverType());
 	if (link == nullptr)
 	{
 		return false;
 	}
 
-	if (link->initialize(configuration["core.device"]) == false)
+	if (link->initialize(configuration["core.driver-args"]) == false)
 	{
 		return false;
 	}
@@ -60,7 +61,7 @@ bool Application::initialize()
 	communicator.setLink(link);
 
 	// initialize profiler
-	profiler.setProfilingTarget(configuration.getTaskName(), communicator);
+	profiler.setProfilingTarget(configuration["test.taskname"], communicator);
 
 	return true;
 }
@@ -72,12 +73,17 @@ void Application::stop()
 
 void Application::run()
 {
-	printf("[App] Starting test\n");
+	printf("[App] Entering run-loop\n");
 	RemainingTime remainingTime;
 	int dumpToDiskIterations = 100;
 	printf("[App] Dumping distribution to disk every %d iterations\n", dumpToDiskIterations);
+	printf("[App] Loading configuration for '%s'\n", configuration["test.display-name"].c_str());
 
-	unsigned int iterations = configuration.getIterations();
+	std::string outputFilename(configuration["test.display-name"]);
+	std::replace(outputFilename.begin(), outputFilename.end(), ' ', '_');
+	outputFilename += ".csv";
+
+	unsigned int iterations = std::stoul(configuration["test.iterations"]);//.getIterations();
 	view->setMaximumIterations(iterations);
 	printf("[App] Test duration: %u iterations\n", iterations);
 	for (unsigned int i = 0; i < iterations; i++)
@@ -105,7 +111,8 @@ void Application::run()
 			auto dist = profiler.getFrequencyDistribution();
 
 			std::ofstream myfile;
-			myfile.open(configuration["measurement.taskname"] + "-dist.csv", std::ofstream::out | std::ofstream::trunc);
+
+			myfile.open(outputFilename, std::ofstream::out | std::ofstream::trunc);
 			for (auto& slot : *dist)
 				myfile << slot.value << "," << slot.counts << "\n";
 
@@ -120,7 +127,7 @@ void Application::run()
 
 	// maybe subtract the baseline measurement
 	std::string strWcet;
-	if (configuration.getValueIfExists("measurement.baseline-wcet", strWcet) == true)
+	if (configuration.getValueIfExists("test.baseline-wcet", strWcet) == true)
 	{
 		baseline = std::stoul(strWcet);
 	}
@@ -134,7 +141,7 @@ void Application::run()
 	{	return a.value < b.value;});
 
 	std::ofstream myfile;
-	myfile.open("wcet-dist.csv");
+	myfile.open(outputFilename, std::ofstream::out | std::ofstream::trunc);
 	for (auto& slot : *dist)
 		myfile << slot.value << "," << slot.counts << "\n";
 
