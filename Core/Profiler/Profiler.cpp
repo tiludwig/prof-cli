@@ -18,12 +18,6 @@ Profiler::~Profiler()
 	// TODO Auto-generated destructor stub
 }
 
-void Profiler::reset()
-{
-	freqDistribution.reset();
-	minMaxStats.reset();
-}
-
 bool Profiler::setProfilingTarget(const std::string& targetname, PacketCommunicator& communicator)
 {
 	packet_t profilingTarget; // = { 30, static_cast<uint16_t>(targetname.length() + 1), const_cast<char*>(targetname.c_str()) };
@@ -61,23 +55,13 @@ uint64_t Profiler::profile(PacketCommunicator& communicator, TestinputProvider& 
 	auto profilingPacket = buildProfilingRequestPacket();
 	auto response = communicator.request(profilingPacket);
 
-	if (response.id == 65)
+	if (response.id != 65)
 	{
-		uint32_t* payload = (uint32_t*) response.payload.data();
-		uint32_t execTime = payload[0];
-
-		return execTime;
+		return INVALID_WCET;
 	}
 
-	return minMaxStats.getMax();
-}
+	uint32_t* payload = (uint32_t*) response.payload.data();
+	uint32_t execTime = payload[0];
 
-uint64_t Profiler::getWCET()
-{
-	return minMaxStats.getMax();
-}
-
-std::vector<freqdist_entry_t>* Profiler::getFrequencyDistribution()
-{
-	return freqDistribution.getDistribution();
+	return execTime;
 }

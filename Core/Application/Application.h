@@ -36,6 +36,7 @@
 #include <Core/Statistics/MinMax.hpp>
 #include <Core/Statistics/Variance.hpp>
 #include <Utility/RemainingTime/RemainingTime.h>
+#include <Core/Statistics/Statistics.h>
 
 #include "View/IView.h"
 
@@ -49,7 +50,7 @@ private:
 	IComLink* link;
 	PacketCommunicator communicator;
 	Profiler profiler;
-
+	Statistics statistics;
 	bool bRunning;
 private:
 	void createPathManager();

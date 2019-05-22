@@ -89,9 +89,11 @@ void Application::initializeTest(TestConfiguration& config, std::string& outputF
 		message += "'";
 		throw CustomException(message);
 	}
-
-	profiler.reset();
+	// assign the target task
 	profiler.setProfilingTarget(config["taskname"], communicator);
+
+	// reset the statistics for the next run
+	statistics.reset();
 }
 
 uint32_t Application::runTest(RemainingTime& remainingTime)
@@ -100,10 +102,20 @@ uint32_t Application::runTest(RemainingTime& remainingTime)
 	auto measurement = profiler.profile(communicator, inputProvider);
 	remainingTime.endMeasurement();
 
-	result_t result = { (uint32_t) measurement };
-	inputProvider.feedbackMeasurementResult(result);
+	if (measurement == INVALID_WCET)
+	{
+		log("Invalid WCET received. Ignoring for now.\n");
+		return 0xFFFFFFFF;
+	}
+	else
+	{
+		statistics.update(measurement);
 
-	return measurement;
+		result_t result = { (uint32_t) measurement };
+		inputProvider.feedbackMeasurementResult(result);
+
+		return measurement;
+	}
 }
 
 void Application::run()
@@ -134,25 +146,25 @@ void Application::run()
 
 			auto secondsLeft = remainingTime.calculateRemainingSeconds(iterations - i);
 
-				view->setWCET(profiler.getWCET());
-				view->setCurrentExecutionTime(measurement);
-				view->setCurrentIteration(i);
-				view->setRemainingTime(secondsLeft);
-				log("");
-				view->update();
+			view->setWCET(statistics.getMaximumExecutionTime());
+			view->setCurrentExecutionTime(measurement);
+			view->setCurrentIteration(i);
+			view->setRemainingTime(secondsLeft);
+			log("");
+			view->update();
 
 			if (dumpToDiskIterations-- <= 0)
 			{
-				writeToDisk(outputFilename, profiler.getFrequencyDistribution());
+				writeToDisk(outputFilename, statistics.getFrequencyDistribution());
 			}
 
 		}
 
 		log("\nProfiling done.\n");
-		auto wcet = profiler.getWCET();
+		auto wcet = statistics.getMaximumExecutionTime();
 		log("Measured WCET: %lu cycles [%.2f us].\n", wcet, (wcet / 72.0));
 
-		auto dist = profiler.getFrequencyDistribution();
+		auto dist = statistics.getFrequencyDistribution();
 		std::sort(dist->begin(), dist->end(), [](freqdist_entry_t a, freqdist_entry_t b)
 		{	return a.value < b.value;});
 
