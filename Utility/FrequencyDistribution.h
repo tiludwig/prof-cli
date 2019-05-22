@@ -27,6 +27,7 @@ private:
 	std::vector<freqdist_entry_t>::iterator findFrequencySlot(uint64_t value);
 public:
 	FrequencyDistribution();
+	void reset();
 
 	void update(uint64_t value);
 

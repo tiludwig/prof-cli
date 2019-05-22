@@ -18,6 +18,12 @@ Profiler::~Profiler()
 	// TODO Auto-generated destructor stub
 }
 
+void Profiler::reset()
+{
+	freqDistribution.reset();
+	minMaxStats.reset();
+}
+
 bool Profiler::setProfilingTarget(const std::string& targetname, PacketCommunicator& communicator)
 {
 	packet_t profilingTarget; // = { 30, static_cast<uint16_t>(targetname.length() + 1), const_cast<char*>(targetname.c_str()) };

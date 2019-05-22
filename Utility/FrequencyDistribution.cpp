@@ -13,6 +13,11 @@ FrequencyDistribution::FrequencyDistribution()
 	sampleCount = 0;
 }
 
+void FrequencyDistribution::reset()
+{
+	entries.clear();
+}
+
 void FrequencyDistribution::update(uint64_t value)
 {
 	auto slot = findFrequencySlot(value);

@@ -29,6 +29,8 @@ public:
 	Profiler();
 	~Profiler();
 
+	void reset();
+
 	bool setProfilingTarget(const std::string& targetname, PacketCommunicator& communicator);
 	uint64_t profile(PacketCommunicator& communicator, TestinputProvider& dataprovider);
 	uint64_t getWCET();

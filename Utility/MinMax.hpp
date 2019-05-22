@@ -21,6 +21,8 @@ public:
 
 	void update(__u64 newValue);
 
+	void reset();
+
 	__u64 getMin();
 	__u64 getMax();
 };
