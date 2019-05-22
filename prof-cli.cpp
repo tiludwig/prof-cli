@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 			printf("An unexpected error occured during initialization.\nTerminating application.\n");
 			return -1;
 		}
-		app.run2();
+		app.run();
 
 	} catch (CustomException& ex)
 	{

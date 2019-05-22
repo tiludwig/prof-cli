@@ -63,6 +63,8 @@ public:
 	void run2();
 
 	void stop();
+
+	void log(const char* fmt, ...);
 };
 
 #endif /* CORE_APPLICATION_APPLICATION_H_ */
