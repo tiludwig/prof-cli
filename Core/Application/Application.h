@@ -12,9 +12,6 @@
 #include <Components/ComLink/SerialLink.h>
 #include <Core/Communicator/PacketCommunicator.h>
 #include <Core/DataLink/Packet.h>
-#include <Utility/MinMax.hpp>
-#include <Utility/Variance.hpp>
-#include <Utility/FrequencyDistribution.h>
 #include <UI/CommandLineInterface.h>
 #include <iostream>
 #include <chrono>
@@ -35,6 +32,9 @@
 #include <Utility/PathManager/PathManager.h>
 #include <Utility/PathManager/DebugPathManager.h>
 #include <Core/Profiler/Profiler.h>
+#include <Core/Statistics/FrequencyDistribution.h>
+#include <Core/Statistics/MinMax.hpp>
+#include <Core/Statistics/Variance.hpp>
 #include <Utility/RemainingTime/RemainingTime.h>
 
 #include "View/IView.h"

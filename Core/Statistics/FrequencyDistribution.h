@@ -5,8 +5,8 @@
  *      Author: tim
  */
 
-#ifndef UTILITY_FREQUENCYDISTRIBUTION_H_
-#define UTILITY_FREQUENCYDISTRIBUTION_H_
+#ifndef CORE_STATISTICS_FREQUENCYDISTRIBUTION_H_
+#define CORE_STATISTICS_FREQUENCYDISTRIBUTION_H_
 
 #include <stdint.h>
 #include <vector>
@@ -34,4 +34,4 @@ public:
 	std::vector<freqdist_entry_t>* getDistribution();
 };
 
-#endif /* UTILITY_FREQUENCYDISTRIBUTION_H_ */
+#endif /* CORE_STATISTICS_FREQUENCYDISTRIBUTION_H_ */

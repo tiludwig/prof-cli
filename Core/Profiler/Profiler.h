@@ -11,10 +11,10 @@
 #include <stdint.h>
 #include <string>
 
-#include <Utility/MinMax.hpp>
-#include <Utility/Variance.hpp>
-#include <Utility/FrequencyDistribution.h>
 #include <Core/Communicator/PacketCommunicator.h>
+#include <Core/Statistics/FrequencyDistribution.h>
+#include <Core/Statistics/MinMax.hpp>
+#include <Core/Statistics/Variance.hpp>
 #include <Core/TestinputProvider/TestinputProvider.h>
 
 class Profiler

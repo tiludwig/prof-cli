@@ -66,10 +66,6 @@ uint64_t Profiler::profile(PacketCommunicator& communicator, TestinputProvider& 
 		uint32_t* payload = (uint32_t*) response.payload.data();
 		uint32_t execTime = payload[0];
 
-		minMaxStats.update(execTime);
-		freqDistribution.update(execTime);
-		varStats.update(execTime);
-
 		return execTime;
 	}
 

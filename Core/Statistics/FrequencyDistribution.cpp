@@ -5,7 +5,7 @@
  *      Author: tim
  */
 
-#include <Utility/FrequencyDistribution.h>
+#include <Core/Statistics/FrequencyDistribution.h>
 #include <algorithm>
 
 FrequencyDistribution::FrequencyDistribution()

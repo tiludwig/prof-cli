@@ -5,7 +5,7 @@
  *      Author: timl
  */
 
-#include "MinMax.hpp"
+#include <Core/Statistics/MinMax.hpp>
 
 MinMax::MinMax()
 {

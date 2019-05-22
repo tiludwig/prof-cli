@@ -5,16 +5,22 @@
  *      Author: timl
  */
 
-#include "Variance.hpp"
+#include <Core/Statistics/Variance.hpp>
 
 Variance::Variance()
+{
+	reset();
+}
+
+void Variance::reset()
 {
 	_count = 0;
 	_M2 = 0.0;
 	_mean = 0.0;
 }
 
-void Variance::update(__u64 newValue) {
+void Variance::update(__u64 newValue)
+{
 	_count++;
 	double delta = newValue - _mean;
 	_mean += delta / _count;
