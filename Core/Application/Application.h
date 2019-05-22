@@ -60,9 +60,12 @@ public:
 
 	bool initialize();
 	void run();
-	void run2();
 
 	void stop();
+
+	uint32_t runTest(RemainingTime& remainingTime);
+	void writeToDisk(const std::string& outputFilename, std::vector<freqdist_entry_t>* dist);
+	void initializeTest(TestConfiguration& config, std::string& outputFilename, unsigned int& iterations);
 
 	void log(const char* fmt, ...);
 };

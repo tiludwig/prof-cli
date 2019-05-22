@@ -63,6 +63,49 @@ void Application::stop()
 	bRunning = false;
 }
 
+void Application::initializeTest(TestConfiguration& config, std::string& outputFilename, unsigned int& iterations)
+{
+
+	RemainingTime remainingTime;
+	log("Loading configuration for '%s'\n", config.name.c_str());
+
+	outputFilename = config.name;
+	std::replace(outputFilename.begin(), outputFilename.end(), ' ', '_');
+	outputFilename += ".csv";
+
+	iterations = std::stoul(config["iterations"]);
+	view->setMaximumIterations(iterations);
+	log("Test duration: %u iterations\n", iterations);
+
+	// initialize the input provider
+	std::string inputprovider(pathManager->getPluginpath());
+	inputprovider += config["input-method"];
+	log("Loading input plugin '%s'\n", inputprovider.c_str());
+	inputProvider = TestinputProvider::loadPlugin(inputprovider.c_str());
+	if (inputProvider.initialize(pathManager->getDatapath(), config["input-args"]) == false)
+	{
+		std::string message("Failed to initialize plugin '");
+		message += inputprovider;
+		message += "'";
+		throw CustomException(message);
+	}
+
+	profiler.reset();
+	profiler.setProfilingTarget(config["taskname"], communicator);
+}
+
+uint32_t Application::runTest(RemainingTime& remainingTime)
+{
+	remainingTime.startMeasurement();
+	auto measurement = profiler.profile(communicator, inputProvider);
+	remainingTime.endMeasurement();
+
+	result_t result = { (uint32_t) measurement };
+	inputProvider.feedbackMeasurementResult(result);
+
+	return measurement;
+}
+
 void Application::run()
 {
 	int testCount = configuration.getTestCount();
@@ -73,95 +116,60 @@ void Application::run()
 	{
 		TestConfiguration& testConfig = configuration.getNextTest();
 		log("Initializing test %i/%i: '%s'\n", (i + 1), testCount, testConfig.name.c_str());
-
-		RemainingTime remainingTime;
+		unsigned int iterations = 0;
+		std::string outputFilename;
 		int dumpToDiskIterations = 100;
 		log("Dumping distribution to disk every %d iterations\n", dumpToDiskIterations);
-		log("Loading configuration for '%s'\n", testConfig.name.c_str());
 
-		std::string outputFilename(testConfig.name);
-		std::replace(outputFilename.begin(), outputFilename.end(), ' ', '_');
-		outputFilename += ".csv";
+		initializeTest(testConfig, outputFilename, iterations);
 
-		unsigned int iterations = std::stoul(testConfig["iterations"]);
-		view->setMaximumIterations(iterations);
-		log("Test duration: %u iterations\n", iterations);
-
-
-		// initialize the input provider
-		std::string inputprovider(pathManager->getPluginpath());
-		inputprovider += testConfig["input-method"];
-		log("Loading input plugin '%s'\n", inputprovider.c_str());
-		inputProvider = TestinputProvider::loadPlugin(inputprovider.c_str());
-		if (inputProvider.initialize(pathManager->getDatapath(), testConfig["input-args"]) == false)
-		{
-			std::string message("Failed to initialize plugin '");
-			message += inputprovider;
-			message += "'";
-			throw CustomException(message);
-		}
-
-
-		profiler.reset();
-		profiler.setProfilingTarget(testConfig["taskname"], communicator);
-
+		RemainingTime remainingTime;
 
 		for (unsigned int i = 0; i < iterations; i++)
 		{
 			if (bRunning == false)
 				break;
 
-			remainingTime.startMeasurement();
-			auto measurement = profiler.profile(communicator, inputProvider);
-			remainingTime.endMeasurement();
-
-			result_t result = { (uint32_t) measurement };
-			inputProvider.feedbackMeasurementResult(result);
+			auto measurement = runTest(remainingTime);
 
 			auto secondsLeft = remainingTime.calculateRemainingSeconds(iterations - i);
 
-			view->setWCET(profiler.getWCET());
-			view->setCurrentExecutionTime(measurement);
-			view->setCurrentIteration(i);
-			view->setRemainingTime(secondsLeft);
-			log("");
-			view->update();
+				view->setWCET(profiler.getWCET());
+				view->setCurrentExecutionTime(measurement);
+				view->setCurrentIteration(i);
+				view->setRemainingTime(secondsLeft);
+				log("");
+				view->update();
 
 			if (dumpToDiskIterations-- <= 0)
 			{
-				auto dist = profiler.getFrequencyDistribution();
-
-				std::ofstream myfile;
-
-				myfile.open(outputFilename, std::ofstream::out | std::ofstream::trunc);
-				for (auto& slot : *dist)
-					myfile << slot.value << "," << slot.counts << "\n";
-
-				myfile.close();
+				writeToDisk(outputFilename, profiler.getFrequencyDistribution());
 			}
 
 		}
 
 		log("\nProfiling done.\n");
 		auto wcet = profiler.getWCET();
-		uint32_t baseline = 0;
-
 		log("Measured WCET: %lu cycles [%.2f us].\n", wcet, (wcet / 72.0));
-		fflush(stdout);
-		auto dist = profiler.getFrequencyDistribution();
 
+		auto dist = profiler.getFrequencyDistribution();
 		std::sort(dist->begin(), dist->end(), [](freqdist_entry_t a, freqdist_entry_t b)
 		{	return a.value < b.value;});
 
-		std::ofstream myfile;
-		myfile.open(outputFilename, std::ofstream::out | std::ofstream::trunc);
-		for (auto& slot : *dist)
-			myfile << slot.value << "," << slot.counts << "\n";
-
-		myfile.close();
-
+		writeToDisk(outputFilename, dist);
 	}
 
+}
+
+void Application::writeToDisk(const std::string& outputFilename, std::vector<freqdist_entry_t>* dist)
+{
+	std::ofstream myfile;
+
+	myfile.open(outputFilename, std::ofstream::out | std::ofstream::trunc);
+	for (auto& slot : *dist)
+		myfile << slot.value << "," << slot.counts << "\n";
+
+	myfile.close();
 }
 
 bool Application::loadConfigurationFromFile(const std::string& filepath)
