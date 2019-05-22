@@ -28,6 +28,7 @@
 #include <limits.h>
 
 #include <Core/Configuration/Configuration.h>
+#include <Core/Configuration/ConfigManager.h>
 #include <Core/TestinputProvider/TestinputProvider.h>
 
 #include <Factories/ComLinkFactory.h>
@@ -42,7 +43,7 @@ class Application
 {
 private:
 	PathManager* pathManager;
-	Configuration configuration;
+	ConfigManager configuration;
 	TestinputProvider inputProvider;
 	IView* view;
 	IComLink* link;
@@ -59,6 +60,7 @@ public:
 
 	bool initialize();
 	void run();
+	void run2();
 
 	void stop();
 };
