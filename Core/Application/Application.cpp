@@ -99,7 +99,9 @@ void Application::initializeTest(TestConfiguration& config, std::string& outputF
 uint32_t Application::runTest(RemainingTime& remainingTime)
 {
 	remainingTime.startMeasurement();
-	auto measurement = profiler.profile(communicator, inputProvider);
+	// send input values
+	sendInputDataToTarget();
+	auto measurement = profiler.profile(communicator);
 	remainingTime.endMeasurement();
 
 	if (measurement == INVALID_WCET)
@@ -115,6 +117,20 @@ uint32_t Application::runTest(RemainingTime& remainingTime)
 		inputProvider.feedbackMeasurementResult(result);
 
 		return measurement;
+	}
+}
+
+void Application::sendInputDataToTarget()
+{
+	// send input values
+	auto dataset = inputProvider.getNextDataset();
+	if (dataset.size != 0)
+	{
+		packet_t simulatedAccValues; // = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
+		simulatedAccValues.id = 20;
+		simulatedAccValues.size.value = static_cast<uint16_t>(dataset.size);
+		simulatedAccValues.payload.add(dataset.data, dataset.size);
+		communicator.request(simulatedAccValues);
 	}
 }
 

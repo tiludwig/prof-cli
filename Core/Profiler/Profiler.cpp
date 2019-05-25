@@ -38,19 +38,8 @@ packet_t Profiler::buildProfilingRequestPacket() const
 	return profilingRequest;
 }
 
-uint64_t Profiler::profile(PacketCommunicator& communicator, TestinputProvider& dataprovider)
+uint64_t Profiler::profile(PacketCommunicator& communicator)
 {
-	// send input values
-	auto dataset = dataprovider.getNextDataset();
-	if (dataset.size != 0)
-	{
-		packet_t simulatedAccValues; // = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
-		simulatedAccValues.id = 20;
-		simulatedAccValues.size.value = static_cast<uint16_t>(dataset.size);
-		simulatedAccValues.payload.add(dataset.data, dataset.size);
-		communicator.request(simulatedAccValues);
-	}
-
 	// start profiler
 	auto profilingPacket = buildProfilingRequestPacket();
 	auto response = communicator.request(profilingPacket);
@@ -61,7 +50,7 @@ uint64_t Profiler::profile(PacketCommunicator& communicator, TestinputProvider& 
 	}
 
 	uint32_t* payload = (uint32_t*) response.payload.data();
-	uint32_t execTime = payload[0];
+	uint32_t execTime = *payload;
 
 	return execTime;
 }

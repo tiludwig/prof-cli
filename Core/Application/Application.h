@@ -55,6 +55,8 @@ private:
 private:
 	void createPathManager();
 	bool loadConfigurationFromFile(const std::string& filepath);
+	void sendInputDataToTarget();
+
 public:
 	Application();
 	~Application();
