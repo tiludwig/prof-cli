@@ -84,8 +84,8 @@ bool SerialLink::initialize(const std::string& initString)
 	tty.c_cc[VMIN] = 0;
 
 	// Set in/out baud rate to be 9600
-	cfsetispeed(&tty, B19200);
-	cfsetospeed(&tty, B19200);
+	cfsetispeed(&tty, B921600);
+	cfsetospeed(&tty, B921600);
 
 	// Save tty settings, also checking for error
 	if (tcsetattr(hSerialPort, TCSANOW, &tty) != 0)

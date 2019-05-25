@@ -8,8 +8,8 @@
 #ifndef UTILITY_REMAININGTIME_REMAININGTIME_H_
 #define UTILITY_REMAININGTIME_REMAININGTIME_H_
 
+#include <Core/Statistics/Variance.hpp>
 #include <stdint.h>
-#include <Utility/Variance.hpp>
 #include <chrono>
 
 class RemainingTime

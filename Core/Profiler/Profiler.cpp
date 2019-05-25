@@ -38,44 +38,19 @@ packet_t Profiler::buildProfilingRequestPacket() const
 	return profilingRequest;
 }
 
-uint64_t Profiler::profile(PacketCommunicator& communicator, TestinputProvider& dataprovider)
+uint64_t Profiler::profile(PacketCommunicator& communicator)
 {
-	// send input values
-	auto dataset = dataprovider.getNextDataset();
-	if (dataset.size != 0)
-	{
-		packet_t simulatedAccValues; // = { 20, static_cast<uint16_t>(dataset.size), dataset.data };
-		simulatedAccValues.id = 20;
-		simulatedAccValues.size.value = static_cast<uint16_t>(dataset.size);
-		simulatedAccValues.payload.add(dataset.data, dataset.size);
-		communicator.request(simulatedAccValues);
-	}
-
 	// start profiler
 	auto profilingPacket = buildProfilingRequestPacket();
 	auto response = communicator.request(profilingPacket);
 
-	if (response.id == 65)
+	if (response.id != 65)
 	{
-		uint32_t* payload = (uint32_t*) response.payload.data();
-		uint32_t execTime = payload[0];
-
-		minMaxStats.update(execTime);
-		freqDistribution.update(execTime);
-		varStats.update(execTime);
-
-		return execTime;
+		return INVALID_WCET;
 	}
 
-	return minMaxStats.getMax();
-}
+	uint32_t* payload = (uint32_t*) response.payload.data();
+	uint32_t execTime = *payload;
 
-uint64_t Profiler::getWCET()
-{
-	return minMaxStats.getMax();
-}
-
-std::vector<freqdist_entry_t>* Profiler::getFrequencyDistribution()
-{
-	return freqDistribution.getDistribution();
+	return execTime;
 }

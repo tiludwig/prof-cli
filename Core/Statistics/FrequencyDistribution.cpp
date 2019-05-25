@@ -5,12 +5,17 @@
  *      Author: tim
  */
 
-#include <Utility/FrequencyDistribution.h>
+#include <Core/Statistics/FrequencyDistribution.h>
 #include <algorithm>
 
 FrequencyDistribution::FrequencyDistribution()
 {
 	sampleCount = 0;
+}
+
+void FrequencyDistribution::reset()
+{
+	entries.clear();
 }
 
 void FrequencyDistribution::update(uint64_t value)

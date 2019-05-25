@@ -103,26 +103,6 @@ void operator>>(std::istream& stream, Configuration& cfg)
 	}
 }
 
-unsigned int Configuration::getIterations()
-{
-	return std::stoul(getValue("measurement.iterations"));
-}
-
-std::string& Configuration::getTaskName()
-{
-	return getValue("measurement.taskname");
-}
-
-std::string& Configuration::getInputProviderName()
-{
-	return getValue("measurement.input-provider");
-}
-
-std::string& Configuration::getComdriverType()
-{
-	return getValue("core.comdriver");
-}
-
 bool Configuration::getValueIfExists(const std::string& key, std::string& value)
 {
 	try

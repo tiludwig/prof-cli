@@ -20,6 +20,8 @@ public:
 
 	void update(__u64 newValue);
 
+	void reset();
+
 	double getMean();
 	double getVariance();
 	double getSampleVariance();

@@ -12,9 +12,6 @@
 #include <Components/ComLink/SerialLink.h>
 #include <Core/Communicator/PacketCommunicator.h>
 #include <Core/DataLink/Packet.h>
-#include <Utility/MinMax.hpp>
-#include <Utility/Variance.hpp>
-#include <Utility/FrequencyDistribution.h>
 #include <UI/CommandLineInterface.h>
 #include <iostream>
 #include <chrono>
@@ -28,13 +25,18 @@
 #include <limits.h>
 
 #include <Core/Configuration/Configuration.h>
+#include <Core/Configuration/ConfigManager.h>
 #include <Core/TestinputProvider/TestinputProvider.h>
 
 #include <Factories/ComLinkFactory.h>
 #include <Utility/PathManager/PathManager.h>
 #include <Utility/PathManager/DebugPathManager.h>
 #include <Core/Profiler/Profiler.h>
+#include <Core/Statistics/FrequencyDistribution.h>
+#include <Core/Statistics/MinMax.hpp>
+#include <Core/Statistics/Variance.hpp>
 #include <Utility/RemainingTime/RemainingTime.h>
+#include <Core/Statistics/Statistics.h>
 
 #include "View/IView.h"
 
@@ -42,17 +44,19 @@ class Application
 {
 private:
 	PathManager* pathManager;
-	Configuration configuration;
+	ConfigManager configuration;
 	TestinputProvider inputProvider;
 	IView* view;
 	IComLink* link;
 	PacketCommunicator communicator;
 	Profiler profiler;
-
+	Statistics statistics;
 	bool bRunning;
 private:
 	void createPathManager();
 	bool loadConfigurationFromFile(const std::string& filepath);
+	void sendInputDataToTarget();
+
 public:
 	Application();
 	~Application();
@@ -61,6 +65,12 @@ public:
 	void run();
 
 	void stop();
+
+	uint32_t runTest(RemainingTime& remainingTime);
+	void writeToDisk(const std::string& outputFilename, std::vector<freqdist_entry_t>* dist);
+	void initializeTest(TestConfiguration& config, std::string& outputFilename, unsigned int& iterations);
+
+	void log(const char* fmt, ...);
 };
 
 #endif /* CORE_APPLICATION_APPLICATION_H_ */

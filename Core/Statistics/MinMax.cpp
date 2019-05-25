@@ -5,9 +5,16 @@
  *      Author: timl
  */
 
-#include "MinMax.hpp"
+#include <Core/Statistics/MinMax.hpp>
 
 MinMax::MinMax()
+{
+	_min = 0;
+	_max = 0;
+	_validMinMax = false;
+}
+
+void MinMax::reset()
 {
 	_min = 0;
 	_max = 0;
