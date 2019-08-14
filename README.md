@@ -3,8 +3,9 @@
 ## Eclipse setup
 
 1. Create a new managed C/C++ project
-2. Get the repository into the project folder:
+2. Get the files into your project folder:
 ```
+cd eclipse-project-folder
 git init
 git remote add origin git@github.com:tiludwig/prof-cli.git
 git pull -t origin master
